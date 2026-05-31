@@ -27,13 +27,12 @@ export async function GET(req: NextRequest) {
     const prevEnd = new Date(startDate.getTime() - 1)
 
     // Build where clause
-    const whereBase: Record<string, unknown> = { userId: DEFAULT_USER_ID }
-    const wherePeriod = {
-      ...whereBase,
+    const wherePeriod: Record<string, unknown> = {
+      userId: DEFAULT_USER_ID,
       expenseDate: { gte: startDate, lte: endDate },
     }
-    const wherePrev = {
-      ...whereBase,
+    const wherePrev: Record<string, unknown> = {
+      userId: DEFAULT_USER_ID,
       expenseDate: { gte: prevStart, lte: prevEnd },
     }
 

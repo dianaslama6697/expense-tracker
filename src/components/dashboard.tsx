@@ -67,6 +67,15 @@ type Insight = {
   message: string
 }
 
+type ExpenseItem = {
+  id: string
+  amount: number
+  merchant: string | null
+  description: string | null
+  expenseDate: string
+  category: { name: string; color: string | null }
+}
+
 type DashboardData = {
   period: { start: string; end: string; days: number }
   currentPeriod: {
@@ -81,6 +90,7 @@ type DashboardData = {
   dailyTotals: DailyItem[]
   budgets: BudgetItem[]
   insights: Insight[]
+  recentExpenses: ExpenseItem[]
 }
 
 function formatCurrency(n: number) {
@@ -212,7 +222,7 @@ export default function Dashboard() {
       "trending-down": TrendingDown,
       "alert-circle": AlertCircle,
       "alert-triangle": AlertTriangle,
-      "pie-chart": PieChart,
+      "pie-chart": PieChartIcon,
       wallet: Wallet,
       "shopping-bag": ShoppingBag,
       bell: Bell,
@@ -466,7 +476,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value) => formatCurrency(Number(value))}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -540,8 +550,8 @@ export default function Dashboard() {
                     }
                   />
                   <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={(label: string) => `Tanggal ${label}`}
+                    formatter={(value) => formatCurrency(Number(value))}
+                    labelFormatter={(label) => `Tanggal ${label}`}
                   />
                   <Bar
                     dataKey="total"
@@ -623,48 +633,38 @@ export default function Dashboard() {
               </p>
             ) : (
               <div className="space-y-2">
-                {data.recentExpenses.map(
-                  (exp: Record<string, unknown>) => {
-                    const category = exp.category as {
-                      name: string
-                      color: string | null
-                    }
-                    return (
-                      <div
-                        key={exp.id as string}
-                        className="flex items-center gap-3"
-                      >
-                        <div
-                          className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                          style={{
-                            backgroundColor: category.color || "#6b7280",
-                          }}
-                        >
-                          {category.name.charAt(0)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm">
-                            {(exp.merchant as string) ||
-                              (exp.description as string) ||
-                              category.name}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">
-                            {formatCurrency(Number(exp.amount))}
-                          </p>
-                          <p className="text-xs text-zinc-400">
-                            {format(
-                              new Date(exp.expenseDate as string),
-                              "d MMM",
-                              { locale: localeId }
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  }
-                )}
+                {data.recentExpenses.map((exp) => (
+                  <div
+                    key={exp.id}
+                    className="flex items-center gap-3"
+                  >
+                    <div
+                      className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                      style={{
+                        backgroundColor: exp.category.color || "#6b7280",
+                      }}
+                    >
+                      {exp.category.name.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm">
+                        {exp.merchant || exp.description || exp.category.name}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {formatCurrency(Number(exp.amount))}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {format(
+                          new Date(exp.expenseDate),
+                          "d MMM",
+                          { locale: localeId }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

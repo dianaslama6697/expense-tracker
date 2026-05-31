@@ -140,7 +140,7 @@ const merchants: Record<string, { name: string; weight: number }[]> = {
   ],
 }
 
-type CategoryInfo = { id: string; name: string; color: string }
+type CategoryInfo = { id: string; name: string; color: string | null }
 
 async function main() {
   const user = await prisma.user.upsert({
