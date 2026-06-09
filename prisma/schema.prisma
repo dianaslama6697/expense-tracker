@@ -30,6 +30,7 @@ model User {
   emailVerified  DateTime? @map("email_verified")
   image          String?
   avatarUrl      String?   @map("avatar_url")
+  password       String?
   currency       String    @default("IDR")
   provider       String?
   providerId     String?   @map("provider_id")
