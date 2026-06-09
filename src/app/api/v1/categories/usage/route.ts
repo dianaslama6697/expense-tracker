@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-
-const DEFAULT_USER_ID = "default-user-001"
+import { getUserId } from "@/lib/auth"
 
 export async function GET() {
   try {
+    const userId = await getUserId()
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const [categories, usageRaw] = await Promise.all([
       prisma.category.findMany({
-        where: { userId: DEFAULT_USER_ID },
+        where: { userId },
         orderBy: { name: "asc" },
       }),
       prisma.expense.groupBy({
         by: ["categoryId"],
-        where: { userId: DEFAULT_USER_ID },
+        where: { userId },
         _count: { id: true },
         orderBy: { _count: { id: "desc" } },
       }),

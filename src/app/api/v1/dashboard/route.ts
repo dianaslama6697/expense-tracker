@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-
-const DEFAULT_USER_ID = "default-user-001"
+import { getUserId } from "@/lib/auth"
 
 export async function GET(req: NextRequest) {
   try {
+    const userId = await getUserId()
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const { searchParams } = new URL(req.url)
     const now = new Date()
 
@@ -28,11 +30,11 @@ export async function GET(req: NextRequest) {
 
     // Build where clause
     const wherePeriod: Record<string, unknown> = {
-      userId: DEFAULT_USER_ID,
+      userId: userId,
       expenseDate: { gte: startDate, lte: endDate },
     }
     const wherePrev: Record<string, unknown> = {
-      userId: DEFAULT_USER_ID,
+      userId: userId,
       expenseDate: { gte: prevStart, lte: prevEnd },
     }
 
@@ -130,7 +132,7 @@ export async function GET(req: NextRequest) {
     if (isCurrentMonth && !categoryId) {
       const budgetRows = await prisma.budget.findMany({
         where: {
-          userId: DEFAULT_USER_ID,
+          userId: userId,
           period: "monthly",
           month: nowMonth + 1,
           year: nowYear,

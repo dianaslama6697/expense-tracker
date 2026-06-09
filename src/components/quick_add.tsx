@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Loader2, Check, X, Sparkles } from "lucide-react"
+import { Loader2, Check, X, Sparkles, Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { FadeIn, StaggerList, StaggerItem } from "@/components/motion_wrappers"
@@ -17,9 +17,10 @@ type CategoryWithUsage = {
 
 type QuickAddProps = {
   onSuccess?: () => void
+  onScanClick?: () => void
 }
 
-export default function QuickAdd({ onSuccess }: QuickAddProps) {
+export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
   const [amount, setAmount] = useState("")
   const [merchant, setMerchant] = useState("")
   const [categories, setCategories] = useState<CategoryWithUsage[]>([])
@@ -233,17 +234,30 @@ export default function QuickAdd({ onSuccess }: QuickAddProps) {
           <p className="text-xs text-zinc-400">
             Klik kategori untuk menyimpan
           </p>
-          {suggestedCategoryId && canSave && (
-            <Button
-              size="sm"
-              onClick={() => handleCategorySelect(suggestedCategoryId)}
-              disabled={saving}
-              className="w-full sm:w-auto"
-            >
-              {saving && <Loader2 className="size-3.5 animate-spin" />}
-              Simpan cepat
-            </Button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {onScanClick && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onScanClick}
+                className="h-7 w-7 p-0"
+                title="Scan struk"
+              >
+                <Camera className="size-3.5" />
+              </Button>
+            )}
+            {suggestedCategoryId && canSave && (
+              <Button
+                size="sm"
+                onClick={() => handleCategorySelect(suggestedCategoryId)}
+                disabled={saving}
+                className="w-full sm:w-auto"
+              >
+                {saving && <Loader2 className="size-3.5 animate-spin" />}
+                Simpan cepat
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

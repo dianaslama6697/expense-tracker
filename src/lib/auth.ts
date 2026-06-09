@@ -40,4 +40,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/login",
   },
+  callbacks: {
+    session({ session, user }) {
+      if (session.user) session.user.id = user.id
+      return session
+    },
+  },
 })
+
+export async function getUserId(): Promise<string | null> {
+  const session = await auth()
+  return session?.user?.id ?? null
+}

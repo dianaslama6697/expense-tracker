@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-
-const DEFAULT_USER_ID = "default-user-001"
+import { getUserId } from "@/lib/auth"
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = await getUserId()
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const expense = await prisma.expense.findFirst({
-      where: { id: params.id, userId: DEFAULT_USER_ID },
+      where: { id: params.id, userId },
     })
     if (!expense) {
       return NextResponse.json(
@@ -24,7 +26,7 @@ export async function PUT(
 
     if (categoryId) {
       const category = await prisma.category.findFirst({
-        where: { id: categoryId, userId: DEFAULT_USER_ID },
+        where: { id: categoryId, userId },
       })
       if (!category) {
         return NextResponse.json(
@@ -62,8 +64,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = await getUserId()
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const expense = await prisma.expense.findFirst({
-      where: { id: params.id, userId: DEFAULT_USER_ID },
+      where: { id: params.id, userId },
     })
     if (!expense) {
       return NextResponse.json(

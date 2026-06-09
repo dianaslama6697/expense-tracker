@@ -1,0 +1,542 @@
+-- CreateEnum
+CREATE TYPE "ExpenseSource" AS ENUM ('manual', 'ocr');
+
+-- CreateEnum
+CREATE TYPE "ReceiptStatus" AS ENUM ('pending', 'done', 'failed');
+
+-- CreateEnum
+CREATE TYPE "BudgetPeriod" AS ENUM ('monthly', 'weekly');
+
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "name" TEXT,
+    "email" TEXT NOT NULL,
+    "email_verified" TIMESTAMP(3),
+    "image" TEXT,
+    "avatar_url" TEXT,
+    "currency" TEXT NOT NULL DEFAULT 'IDR',
+    "provider" TEXT,
+    "provider_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "accounts" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "providerAccountId" TEXT NOT NULL,
+    "refreshToken" TEXT,
+    "accessToken" TEXT,
+    "expiresAt" INTEGER,
+    "tokenType" TEXT,
+    "scope" TEXT,
+    "idToken" TEXT,
+    "sessionState" TEXT,
+
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "sessions" (
+    "id" TEXT NOT NULL,
+    "sessionToken" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "verification_tokens" (
+    "identifier" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "categories" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "icon" TEXT,
+    "color" TEXT,
+    "is_default" BOOLEAN NOT NULL DEFAULT false,
+    "budget_limit" DECIMAL(65,30),
+
+    CONSTRAINT "categories_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "expenses" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "category_id" TEXT NOT NULL,
+    "receipt_id" TEXT,
+    "amount" DECIMAL(65,30) NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'IDR',
+    "merchant" TEXT,
+    "description" TEXT,
+    "expense_date" TIMESTAMP(3) NOT NULL,
+    "source" "ExpenseSource" NOT NULL DEFAULT 'manual',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "expenses_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "receipts" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "image_url" TEXT NOT NULL,
+    "image_key" TEXT NOT NULL,
+    "status" "ReceiptStatus" NOT NULL DEFAULT 'pending',
+    "raw_text" TEXT,
+    "ai_data" JSONB,
+    "confidence" DECIMAL(65,30),
+    "processed_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "receipts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "budgets" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "category_id" TEXT NOT NULL,
+    "amount" DECIMAL(65,30) NOT NULL,
+    "period" "BudgetPeriod" NOT NULL DEFAULT 'monthly',
+    "month" INTEGER,
+    "year" INTEGER,
+    "alert_at" DECIMAL(65,30),
+
+    CONSTRAINT "budgets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tags" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+
+    CONSTRAINT "tags_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "expense_tags" (
+    "expense_id" TEXT NOT NULL,
+    "tag_id" TEXT NOT NULL,
+
+    CONSTRAINT "expense_tags_pkey" PRIMARY KEY ("expense_id","tag_id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "accounts_provider_providerAccountId_key" ON "accounts"("provider", "providerAccountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sessions_sessionToken_key" ON "sessions"("sessionToken");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_tokens_token_key" ON "verification_tokens"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "verification_tokens"("identifier", "token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tags_user_id_name_key" ON "tags"("user_id", "name");
+
+-- AddForeignKey
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "categories" ADD CONSTRAINT "categories_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_receipt_id_fkey" FOREIGN KEY ("receipt_id") REFERENCES "receipts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "receipts" ADD CONSTRAINT "receipts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "budgets" ADD CONSTRAINT "budgets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "budgets" ADD CONSTRAINT "budgets_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tags" ADD CONSTRAINT "tags_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "expense_tags" ADD CONSTRAINT "expense_tags_expense_id_fkey" FOREIGN KEY ("expense_id") REFERENCES "expenses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "expense_tags" ADD CONSTRAINT "expense_tags_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- =============================================
+-- Expense Tracker - Seed Data for Supabase
+-- =============================================
+
+BEGIN;
+
+-- User
+INSERT INTO users (id, name, email, created_at) VALUES
+('default-user-001', 'Default User', 'default@expense-tracker.local', NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- Categories
+INSERT INTO categories (id, user_id, name, icon, color, is_default) VALUES
+('default-cat-makanan-minuman', 'default-user-001', 'Makanan & Minuman', 'utensils-crossed', '#ef4444', true),
+('default-cat-transportasi', 'default-user-001', 'Transportasi', 'car', '#f97316', true),
+('default-cat-belanja', 'default-user-001', 'Belanja', 'shopping-bag', '#eab308', true),
+('default-cat-hiburan', 'default-user-001', 'Hiburan', 'gamepad-2', '#22c55e', true),
+('default-cat-tagihan', 'default-user-001', 'Tagihan', 'file-text', '#3b82f6', true),
+('default-cat-kesehatan', 'default-user-001', 'Kesehatan', 'heart-pulse', '#ec4899', true),
+('default-cat-pendidikan', 'default-user-001', 'Pendidikan', 'book-open', '#8b5cf6', true),
+('default-cat-lainnya', 'default-user-001', 'Lainnya', 'more-horizontal', '#6b7280', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Budgets
+INSERT INTO budgets (id, user_id, category_id, amount, period, month, year) VALUES
+(gen_random_uuid(), 'default-user-001', 'default-cat-makanan-minuman', 1500000, 'monthly', 5, 2026),
+(gen_random_uuid(), 'default-user-001', 'default-cat-transportasi', 500000, 'monthly', 5, 2026),
+(gen_random_uuid(), 'default-user-001', 'default-cat-belanja', 1000000, 'monthly', 5, 2026),
+(gen_random_uuid(), 'default-user-001', 'default-cat-hiburan', 500000, 'monthly', 5, 2026),
+(gen_random_uuid(), 'default-user-001', 'default-cat-tagihan', 1000000, 'monthly', 5, 2026),
+(gen_random_uuid(), 'default-user-001', 'default-cat-kesehatan', 300000, 'monthly', 5, 2026),
+(gen_random_uuid(), 'default-user-001', 'default-cat-pendidikan', 500000, 'monthly', 5, 2026),
+(gen_random_uuid(), 'default-user-001', 'default-cat-lainnya', 300000, 'monthly', 5, 2026);
+
+-- Expenses
+INSERT INTO expenses (id, user_id, category_id, amount, currency, merchant, description, expense_date, source, created_at) VALUES
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',17417,'IDR','GrabFood',NULL,'2026-03-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',97513,'IDR','Chatime',NULL,'2026-03-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',80475,'IDR','Bakso Pak Kumis',NULL,'2026-03-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',43047,'IDR','Bakso Pak Kumis',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',53197,'IDR','Warung Padang Sederhana',NULL,'2026-03-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',31558,'IDR','Starbucks',NULL,'2026-03-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',35242,'IDR','Warung Padang Sederhana',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',72339,'IDR','Warung Padang Sederhana',NULL,'2026-03-31','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',60542,'IDR','Nasi Goreng Mas Andre',NULL,'2026-03-31','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',72089,'IDR','GrabFood',NULL,'2026-03-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',86848,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',93437,'IDR','McDonald''s',NULL,'2026-03-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',99641,'IDR','Warung Padang Sederhana',NULL,'2026-03-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',29067,'IDR','Sate Padang Pak Karjo',NULL,'2026-03-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',41186,'IDR','Kopi Kenangan',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',25870,'IDR','GrabFood',NULL,'2026-03-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',95675,'IDR','Indomie Rebus + Telur',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',111088,'IDR','Starbucks',NULL,'2026-03-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',111751,'IDR','Starbucks',NULL,'2026-03-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',48603,'IDR','Mie Gacoan',NULL,'2026-03-31','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',92977,'IDR','Chatime',NULL,'2026-03-27','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',70779,'IDR','Bakso Pak Kumis',NULL,'2026-03-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',47689,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',83516,'IDR','Warung Padang Sederhana',NULL,'2026-03-18','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',62905,'IDR','Warung Padang Sederhana',NULL,'2026-03-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',55767,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',28141,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',58152,'IDR','Indomie Rebus + Telur',NULL,'2026-03-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',89575,'IDR','GoFood',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',65184,'IDR','Mie Gacoan',NULL,'2026-03-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',28228,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',100305,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',77751,'IDR','Bakso Pak Kumis',NULL,'2026-03-03','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',55579,'IDR','Bakso Pak Kumis',NULL,'2026-03-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',36443,'IDR','Indomie Rebus + Telur',NULL,'2026-03-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',35620,'IDR','Sate Padang Pak Karjo',NULL,'2026-03-31','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',97379,'IDR','KFC',NULL,'2026-03-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',38348,'IDR','Indomie Rebus + Telur',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',115426,'IDR','Nasi Goreng Mas Andre',NULL,'2026-03-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',69349,'IDR','Kopi Kenangan',NULL,'2026-03-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',45796,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',60077,'IDR','Bakso Pak Kumis',NULL,'2026-03-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',26406,'IDR','Nasi Goreng Mas Andre',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',16064,'IDR','Bakso Pak Kumis',NULL,'2026-03-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',35134,'IDR','GoFood',NULL,'2026-03-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',116313,'IDR','Mie Gacoan',NULL,'2026-03-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',68541,'IDR','McDonald''s',NULL,'2026-03-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',100296,'IDR','GrabFood',NULL,'2026-03-28','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',80983,'IDR','Nasi Goreng Mas Andre',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',27905,'IDR','Nasi Goreng Mas Andre',NULL,'2026-03-28','manual',NOW());
+INSERT INTO expenses (id, user_id, category_id, amount, currency, merchant, description, expense_date, source, created_at) VALUES
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',117446,'IDR','KFC',NULL,'2026-03-31','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',19245,'IDR','Kopi Kenangan',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',68054,'IDR','KFC',NULL,'2026-03-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',41265,'IDR','Indomie Rebus + Telur',NULL,'2026-03-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',93270,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',75378,'IDR','Starbucks',NULL,'2026-03-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',113406,'IDR','Kopi Kenangan',NULL,'2026-03-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',23969,'IDR','Dimsum Moms',NULL,'2026-03-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',75048,'IDR','Martabak Bang Ali',NULL,'2026-03-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',55865,'IDR','Indomie Rebus + Telur',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',65570,'IDR','Sate Padang Pak Karjo',NULL,'2026-03-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',20982,'IDR','Sate Padang Pak Karjo',NULL,'2026-03-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',30967,'IDR','Mie Gacoan',NULL,'2026-03-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',20194,'IDR','Starbucks',NULL,'2026-03-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',116193,'IDR','Kopi Kenangan',NULL,'2026-03-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',82837,'IDR','Ayam Geprek Bu Rum',NULL,'2026-03-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',36655,'IDR','Parkir',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',74022,'IDR','MRT Jakarta',NULL,'2026-03-27','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',61309,'IDR','Gojek',NULL,'2026-03-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',11622,'IDR','Grab',NULL,'2026-03-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',71551,'IDR','Gojek',NULL,'2026-03-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',77403,'IDR','Grab',NULL,'2026-03-28','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',72070,'IDR','SPBU Pertamina',NULL,'2026-03-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',43655,'IDR','Transjakarta',NULL,'2026-03-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',48108,'IDR','KRL Commuter',NULL,'2026-03-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',53470,'IDR','SPBU Pertamina',NULL,'2026-03-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',66402,'IDR','Shell',NULL,'2026-03-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',16174,'IDR','Grab',NULL,'2026-03-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',77828,'IDR','Grab',NULL,'2026-03-31','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',79350,'IDR','Parkir',NULL,'2026-03-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',81993,'IDR','Miniso',NULL,'2026-03-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',465053,'IDR','Uniqlo',NULL,'2026-03-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',115985,'IDR','Shopee',NULL,'2026-03-27','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',183156,'IDR','Tokopedia',NULL,'2026-03-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',59848,'IDR','Disney+ Hotstar',NULL,'2026-03-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',106270,'IDR','Viu',NULL,'2026-03-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',54820,'IDR','Game Center',NULL,'2026-03-09','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',59806,'IDR','Game Center',NULL,'2026-03-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',83544,'IDR','Spotify',NULL,'2026-03-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',87713,'IDR','Bowling',NULL,'2026-03-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',63891,'IDR','YouTube Premium',NULL,'2026-03-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',16461,'IDR','IQIYI',NULL,'2026-03-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',250000,'IDR','PLN',NULL,'2026-03-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',120000,'IDR','PDAM',NULL,'2026-03-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',300000,'IDR','IndiHome',NULL,'2026-03-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',100000,'IDR','Telkomsel',NULL,'2026-03-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',66000,'IDR','BPJS Kesehatan',NULL,'2026-03-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',59070,'IDR','Laundry',NULL,'2026-03-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',70998,'IDR','Donasi',NULL,'2026-03-03','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',63786,'IDR','Parkir',NULL,'2026-03-16','manual',NOW());
+INSERT INTO expenses (id, user_id, category_id, amount, currency, merchant, description, expense_date, source, created_at) VALUES
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',35764,'IDR','Dimsum Moms',NULL,'2026-04-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',61931,'IDR','KFC',NULL,'2026-04-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',48417,'IDR','GoFood',NULL,'2026-04-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',87649,'IDR','Nasi Goreng Mas Andre',NULL,'2026-04-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',63477,'IDR','Chatime',NULL,'2026-04-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',37945,'IDR','Nasi Goreng Mas Andre',NULL,'2026-04-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',34899,'IDR','McDonald''s',NULL,'2026-04-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',52433,'IDR','Pizza Hut',NULL,'2026-04-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',107995,'IDR','Bakso Pak Kumis',NULL,'2026-04-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',42967,'IDR','Chatime',NULL,'2026-04-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',99808,'IDR','Pizza Hut',NULL,'2026-04-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',21792,'IDR','McDonald''s',NULL,'2026-04-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',86425,'IDR','Mie Gacoan',NULL,'2026-04-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',96074,'IDR','Indomie Rebus + Telur',NULL,'2026-04-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',100709,'IDR','Warung Padang Sederhana',NULL,'2026-04-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',52746,'IDR','GoFood',NULL,'2026-04-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',43221,'IDR','Bakso Pak Kumis',NULL,'2026-04-18','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',91808,'IDR','Ayam Geprek Bu Rum',NULL,'2026-04-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',28157,'IDR','Warung Padang Sederhana',NULL,'2026-04-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',103150,'IDR','Dimsum Moms',NULL,'2026-04-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',16005,'IDR','Warung Padang Sederhana',NULL,'2026-04-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',42992,'IDR','Martabak Bang Ali',NULL,'2026-04-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',58466,'IDR','Ayam Geprek Bu Rum',NULL,'2026-04-28','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',22309,'IDR','GrabFood',NULL,'2026-04-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',104998,'IDR','Chatime',NULL,'2026-04-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',18808,'IDR','Kopi Kenangan',NULL,'2026-04-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',66942,'IDR','KFC',NULL,'2026-04-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',110297,'IDR','Dimsum Moms',NULL,'2026-04-27','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',69567,'IDR','Indomie Rebus + Telur',NULL,'2026-04-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',22265,'IDR','GrabFood',NULL,'2026-04-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',111453,'IDR','GoFood',NULL,'2026-04-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',101322,'IDR','KFC',NULL,'2026-04-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',43625,'IDR','GrabFood',NULL,'2026-04-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',117664,'IDR','Warung Padang Sederhana',NULL,'2026-04-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',109079,'IDR','Mie Gacoan',NULL,'2026-04-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',117160,'IDR','Indomie Rebus + Telur',NULL,'2026-04-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',33174,'IDR','KFC',NULL,'2026-04-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',106498,'IDR','Dimsum Moms',NULL,'2026-04-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',35241,'IDR','GoFood',NULL,'2026-04-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',54357,'IDR','Dimsum Moms',NULL,'2026-04-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',39074,'IDR','Kopi Kenangan',NULL,'2026-04-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',46793,'IDR','GrabFood',NULL,'2026-04-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',38094,'IDR','Sate Padang Pak Karjo',NULL,'2026-04-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',70381,'IDR','Nasi Goreng Mas Andre',NULL,'2026-04-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',81075,'IDR','Ayam Geprek Bu Rum',NULL,'2026-04-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',78164,'IDR','Ayam Geprek Bu Rum',NULL,'2026-04-27','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',59781,'IDR','GrabFood',NULL,'2026-04-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',89532,'IDR','Warung Padang Sederhana',NULL,'2026-04-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',41007,'IDR','Pizza Hut',NULL,'2026-04-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',23811,'IDR','Ayam Geprek Bu Rum',NULL,'2026-04-11','manual',NOW());
+INSERT INTO expenses (id, user_id, category_id, amount, currency, merchant, description, expense_date, source, created_at) VALUES
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',112537,'IDR','Bakso Pak Kumis',NULL,'2026-04-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',41792,'IDR','Chatime',NULL,'2026-04-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',59274,'IDR','Dimsum Moms',NULL,'2026-04-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',19364,'IDR','Sate Padang Pak Karjo',NULL,'2026-04-18','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',91551,'IDR','Indomie Rebus + Telur',NULL,'2026-04-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',35783,'IDR','Sate Padang Pak Karjo',NULL,'2026-04-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',69994,'IDR','Nasi Goreng Mas Andre',NULL,'2026-04-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',36173,'IDR','Warung Padang Sederhana',NULL,'2026-04-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',93089,'IDR','Ayam Geprek Bu Rum',NULL,'2026-04-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',65359,'IDR','Mie Gacoan',NULL,'2026-04-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',116741,'IDR','Indomie Rebus + Telur',NULL,'2026-04-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',103864,'IDR','KFC',NULL,'2026-04-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',50755,'IDR','Indomie Rebus + Telur',NULL,'2026-04-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',36788,'IDR','Sate Padang Pak Karjo',NULL,'2026-04-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',106463,'IDR','Warung Padang Sederhana',NULL,'2026-04-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',89162,'IDR','Pizza Hut',NULL,'2026-04-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',57914,'IDR','Warung Padang Sederhana',NULL,'2026-04-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',31006,'IDR','Warung Padang Sederhana',NULL,'2026-04-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',39939,'IDR','GoFood',NULL,'2026-04-09','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',23242,'IDR','Ayam Geprek Bu Rum',NULL,'2026-04-03','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',38337,'IDR','KRL Commuter',NULL,'2026-04-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',22390,'IDR','Shell',NULL,'2026-04-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',69265,'IDR','Grab',NULL,'2026-04-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',39816,'IDR','Tol JORR',NULL,'2026-04-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',41644,'IDR','KRL Commuter',NULL,'2026-04-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',29856,'IDR','Grab',NULL,'2026-04-18','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',12955,'IDR','Transjakarta',NULL,'2026-04-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',58128,'IDR','Transjakarta',NULL,'2026-04-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',61776,'IDR','Grab',NULL,'2026-04-28','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',51490,'IDR','Parkir',NULL,'2026-04-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',28315,'IDR','MRT Jakarta',NULL,'2026-04-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',37091,'IDR','KRL Commuter',NULL,'2026-04-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',79629,'IDR','Blue Bird',NULL,'2026-04-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',396284,'IDR','Tokopedia',NULL,'2026-04-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',126442,'IDR','Superindo',NULL,'2026-04-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',247195,'IDR','Mr DIY',NULL,'2026-04-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',334984,'IDR','IKEA',NULL,'2026-04-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',429041,'IDR','Uniqlo',NULL,'2026-04-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',101513,'IDR','Game Center',NULL,'2026-04-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',31172,'IDR','CGV',NULL,'2026-04-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',136941,'IDR','Spotify',NULL,'2026-04-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',152724,'IDR','Netflix',NULL,'2026-04-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',106763,'IDR','Steam',NULL,'2026-04-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',129851,'IDR','Netflix',NULL,'2026-04-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',122729,'IDR','Billiard',NULL,'2026-04-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',192849,'IDR','CGV',NULL,'2026-04-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',250000,'IDR','PLN',NULL,'2026-04-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',120000,'IDR','PDAM',NULL,'2026-04-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',300000,'IDR','IndiHome',NULL,'2026-04-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',100000,'IDR','Telkomsel',NULL,'2026-04-13','manual',NOW());
+INSERT INTO expenses (id, user_id, category_id, amount, currency, merchant, description, expense_date, source, created_at) VALUES
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',66000,'IDR','BPJS Kesehatan',NULL,'2026-04-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',52887,'IDR','Indomaret',NULL,'2026-04-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',11911,'IDR','Indomaret',NULL,'2026-04-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',27333,'IDR','Laundry',NULL,'2026-04-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',13311,'IDR','Indomaret',NULL,'2026-04-27','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',23891,'IDR','McDonald''s',NULL,'2026-05-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',84998,'IDR','Indomie Rebus + Telur',NULL,'2026-05-03','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',72985,'IDR','Ayam Geprek Bu Rum',NULL,'2026-05-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',43751,'IDR','KFC',NULL,'2026-05-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',30842,'IDR','Pizza Hut',NULL,'2026-05-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',80013,'IDR','Ayam Geprek Bu Rum',NULL,'2026-05-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',71859,'IDR','Indomie Rebus + Telur',NULL,'2026-05-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',108126,'IDR','Bakso Pak Kumis',NULL,'2026-05-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',108041,'IDR','Sate Padang Pak Karjo',NULL,'2026-05-03','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',66392,'IDR','KFC',NULL,'2026-05-20','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',18647,'IDR','Mie Gacoan',NULL,'2026-05-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',53179,'IDR','McDonald''s',NULL,'2026-05-18','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',74307,'IDR','Warung Padang Sederhana',NULL,'2026-05-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',15220,'IDR','Indomie Rebus + Telur',NULL,'2026-05-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',66657,'IDR','Kopi Kenangan',NULL,'2026-05-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',70128,'IDR','McDonald''s',NULL,'2026-05-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',70980,'IDR','Starbucks',NULL,'2026-05-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',101110,'IDR','Indomie Rebus + Telur',NULL,'2026-05-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',50223,'IDR','Warung Padang Sederhana',NULL,'2026-05-28','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',67945,'IDR','Mie Gacoan',NULL,'2026-05-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',47928,'IDR','Sate Padang Pak Karjo',NULL,'2026-05-29','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',99664,'IDR','Mie Gacoan',NULL,'2026-05-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',59558,'IDR','Indomie Rebus + Telur',NULL,'2026-05-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',118483,'IDR','KFC',NULL,'2026-05-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',48013,'IDR','Bakso Pak Kumis',NULL,'2026-05-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',70228,'IDR','McDonald''s',NULL,'2026-05-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',79960,'IDR','Pizza Hut',NULL,'2026-05-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',33211,'IDR','Warung Padang Sederhana',NULL,'2026-05-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',92411,'IDR','GoFood',NULL,'2026-05-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',82444,'IDR','Kopi Kenangan',NULL,'2026-05-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',51248,'IDR','Warung Padang Sederhana',NULL,'2026-05-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',64833,'IDR','Sate Padang Pak Karjo',NULL,'2026-05-03','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',63730,'IDR','GrabFood',NULL,'2026-05-11','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',115910,'IDR','McDonald''s',NULL,'2026-05-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',112104,'IDR','Warung Padang Sederhana',NULL,'2026-05-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',111654,'IDR','Warung Padang Sederhana',NULL,'2026-05-26','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',95139,'IDR','Kopi Kenangan',NULL,'2026-05-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',50395,'IDR','Sate Padang Pak Karjo',NULL,'2026-05-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',107826,'IDR','Bakso Pak Kumis',NULL,'2026-05-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',83671,'IDR','GoFood',NULL,'2026-05-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',93642,'IDR','Pizza Hut',NULL,'2026-05-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',107219,'IDR','KFC',NULL,'2026-05-03','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',16962,'IDR','Warung Padang Sederhana',NULL,'2026-05-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',119666,'IDR','Ayam Geprek Bu Rum',NULL,'2026-05-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',57861,'IDR','Martabak Bang Ali',NULL,'2026-05-31','manual',NOW());
+INSERT INTO expenses (id, user_id, category_id, amount, currency, merchant, description, expense_date, source, created_at) VALUES
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',38184,'IDR','Warung Padang Sederhana',NULL,'2026-05-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',16331,'IDR','Warung Padang Sederhana',NULL,'2026-05-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',48879,'IDR','GoFood',NULL,'2026-05-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',26746,'IDR','McDonald''s',NULL,'2026-05-31','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',29722,'IDR','Martabak Bang Ali',NULL,'2026-05-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',103621,'IDR','KFC',NULL,'2026-05-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',62536,'IDR','Warung Padang Sederhana',NULL,'2026-05-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',61014,'IDR','Indomie Rebus + Telur',NULL,'2026-05-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',33745,'IDR','Kopi Kenangan',NULL,'2026-05-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',33988,'IDR','Starbucks',NULL,'2026-05-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',36585,'IDR','Warung Padang Sederhana',NULL,'2026-05-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',30567,'IDR','Mie Gacoan',NULL,'2026-05-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',111083,'IDR','Sate Padang Pak Karjo',NULL,'2026-05-10','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',48815,'IDR','Nasi Goreng Mas Andre',NULL,'2026-05-14','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',30823,'IDR','Pizza Hut',NULL,'2026-05-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',23999,'IDR','Chatime',NULL,'2026-05-05','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',17332,'IDR','Bakso Pak Kumis',NULL,'2026-05-27','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',28726,'IDR','Warung Padang Sederhana',NULL,'2026-05-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',15836,'IDR','GoFood',NULL,'2026-05-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',20668,'IDR','Indomie Rebus + Telur',NULL,'2026-05-07','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',85858,'IDR','Warung Padang Sederhana',NULL,'2026-05-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-makanan-minuman',64049,'IDR','Warung Padang Sederhana',NULL,'2026-05-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',25708,'IDR','KRL Commuter',NULL,'2026-05-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',26655,'IDR','Parkir',NULL,'2026-05-02','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',62216,'IDR','Shell',NULL,'2026-05-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',36949,'IDR','MRT Jakarta',NULL,'2026-05-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',41747,'IDR','Grab',NULL,'2026-05-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',24316,'IDR','Grab',NULL,'2026-05-19','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',47121,'IDR','KRL Commuter',NULL,'2026-05-23','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',17120,'IDR','Transjakarta',NULL,'2026-05-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',74681,'IDR','Tol JORR',NULL,'2026-05-25','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',31548,'IDR','MRT Jakarta',NULL,'2026-05-09','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',26284,'IDR','Tol JORR',NULL,'2026-05-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',41393,'IDR','Grab',NULL,'2026-05-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-transportasi',13011,'IDR','SPBU Pertamina',NULL,'2026-05-21','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',243079,'IDR','Tokopedia',NULL,'2026-05-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',226550,'IDR','Miniso',NULL,'2026-05-16','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',236288,'IDR','Lazada',NULL,'2026-05-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',407513,'IDR','Lazada',NULL,'2026-05-08','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-belanja',339968,'IDR','Mr DIY',NULL,'2026-05-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',44126,'IDR','Netflix',NULL,'2026-05-24','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',16317,'IDR','Game Center',NULL,'2026-05-22','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',123042,'IDR','Steam',NULL,'2026-05-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',129707,'IDR','Billiard',NULL,'2026-05-17','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',38637,'IDR','Disney+ Hotstar',NULL,'2026-05-15','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',109381,'IDR','CGV',NULL,'2026-05-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',54885,'IDR','Steam',NULL,'2026-05-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',83985,'IDR','CGV',NULL,'2026-05-09','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-hiburan',35697,'IDR','CGV',NULL,'2026-05-30','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',250000,'IDR','PLN',NULL,'2026-05-01','manual',NOW());
+INSERT INTO expenses (id, user_id, category_id, amount, currency, merchant, description, expense_date, source, created_at) VALUES
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',120000,'IDR','PDAM',NULL,'2026-05-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',300000,'IDR','IndiHome',NULL,'2026-05-01','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',100000,'IDR','Telkomsel',NULL,'2026-05-12','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-tagihan',66000,'IDR','BPJS Kesehatan',NULL,'2026-05-06','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',38534,'IDR','Indomaret',NULL,'2026-05-13','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',34872,'IDR','Laundry',NULL,'2026-05-04','manual',NOW()),
+(gen_random_uuid(),'default-user-001','default-cat-lainnya',50262,'IDR','Laundry',NULL,'2026-05-29','manual',NOW());
+
+COMMIT;

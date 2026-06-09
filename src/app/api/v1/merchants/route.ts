@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-
-const DEFAULT_USER_ID = "default-user-001"
+import { getUserId } from "@/lib/auth"
 
 export async function GET(req: NextRequest) {
   try {
+    const userId = await getUserId()
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const { searchParams } = new URL(req.url)
     const q = searchParams.get("q") || ""
 
@@ -14,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const expenses = await prisma.expense.findMany({
       where: {
-        userId: DEFAULT_USER_ID,
+        userId,
         merchant: { not: null, contains: q, mode: "insensitive" },
       },
       select: { merchant: true },

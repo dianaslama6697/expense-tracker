@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { format } from "date-fns"
 import { id as localeId } from "date-fns/locale"
 import { FadeIn, StaggerList, StaggerItem } from "@/components/motion_wrappers"
@@ -17,6 +17,7 @@ import {
   AlertCircle,
   ShoppingBag,
   Bell,
+  Camera,
 } from "lucide-react"
 import {
   PieChart,
@@ -30,6 +31,7 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts"
+import ScanReceipt, { type ScanReceiptHandle } from "@/components/scan_receipt"
 
 type CategoryItem = {
   categoryId: string
@@ -123,6 +125,7 @@ export default function Dashboard() {
   const [categoryId, setCategoryId] = useState("")
   const [monthOffset, setMonthOffset] = useState(0)
   const [showCustom, setShowCustom] = useState(false)
+  const scanRef = useRef<ScanReceiptHandle>(null)
 
   const buildParams = useCallback(() => {
     const now = new Date()
@@ -265,6 +268,13 @@ export default function Dashboard() {
             }`}
           >
             Kustom
+          </button>
+          <button
+            onClick={() => scanRef.current?.openPicker()}
+            className="ml-auto flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-medium text-white transition-colors hover:bg-blue-700 sm:text-xs"
+          >
+            <Camera className="size-3.5" />
+            Scan Struk
           </button>
         </div>
 
@@ -670,6 +680,8 @@ export default function Dashboard() {
           </div>
         </>
       )}
+
+      <ScanReceipt ref={scanRef} onScanned={fetchData} />
     </div>
   )
 }

@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-
-const DEFAULT_USER_ID = "default-user-001"
+import { getUserId } from "@/lib/auth"
 
 export async function GET(req: NextRequest) {
   try {
+    const userId = await getUserId()
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const { searchParams } = new URL(req.url)
     const month = searchParams.get("month")
     const year = searchParams.get("year")
 
-    const where: Record<string, unknown> = { userId: DEFAULT_USER_ID }
+    const where: Record<string, unknown> = { userId }
 
     if (month && year) {
       const startDate = new Date(Number(year), Number(month) - 1, 1)
@@ -35,6 +37,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getUserId()
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const body = await req.json()
     const {
       amount,
@@ -43,6 +48,8 @@ export async function POST(req: NextRequest) {
       merchant,
       expenseDate,
       currency = "IDR",
+      receiptId,
+      source,
     } = body
 
     if (!amount || !categoryId) {
@@ -54,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // validasi kategori milik user
     const category = await prisma.category.findFirst({
-      where: { id: categoryId, userId: DEFAULT_USER_ID },
+      where: { id: categoryId, userId },
     })
     if (!category) {
       return NextResponse.json(
@@ -65,13 +72,15 @@ export async function POST(req: NextRequest) {
 
     const expense = await prisma.expense.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId,
         categoryId,
         amount,
         currency,
         merchant: merchant || null,
         description: description || null,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
+        receiptId: receiptId || null,
+        source: source || "manual",
       },
       include: { category: true },
     })

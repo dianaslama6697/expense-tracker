@@ -5,6 +5,7 @@ allowBuilds:
   msw: true
   prisma: true
   sharp: true
+  tesseract.js: set this to true or false
   unrs-resolver: true
 ignoredBuiltDependencies:
   - sharp
