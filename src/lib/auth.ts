@@ -46,6 +46,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/login",
   },
+  events: {
+    async createUser({ user }) {
+      if (!user.id) return
+      const defaultCategories = [
+        { name: "Makanan & Minuman", icon: "utensils-crossed", color: "#ef4444" },
+        { name: "Transportasi", icon: "car", color: "#f97316" },
+        { name: "Belanja", icon: "shopping-bag", color: "#eab308" },
+        { name: "Hiburan", icon: "gamepad-2", color: "#22c55e" },
+        { name: "Tagihan", icon: "file-text", color: "#3b82f6" },
+        { name: "Kesehatan", icon: "heart-pulse", color: "#ec4899" },
+        { name: "Pendidikan", icon: "book-open", color: "#8b5cf6" },
+        { name: "Lainnya", icon: "more-horizontal", color: "#6b7280" },
+      ]
+      await prisma.category.createMany({
+        data: defaultCategories.map((cat) => ({
+          userId: user.id!,
+          ...cat,
+          isDefault: true,
+        })),
+      })
+    },
+  },
   callbacks: {
     session({ session, token }) {
       if (session.user) session.user.id = token.sub!
