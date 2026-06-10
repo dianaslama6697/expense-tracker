@@ -5,7 +5,7 @@ import { getUserId } from "@/lib/auth"
 const API_KEY = process.env.OPENAI_API_KEY
 const BASE_URL =
   process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o"
+const MODEL = process.env.OPENAI_MODEL || "MiniMax-M3"
 
 export async function POST(req: NextRequest) {
   try {
