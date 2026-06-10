@@ -140,22 +140,44 @@ export async function GET(req: NextRequest) {
         include: { category: true },
       })
 
-      budgets = budgetRows.map((b) => {
-        const spent = currentExpenses
-          .filter((e) => e.categoryId === b.categoryId)
-          .reduce((s, e) => s + Number(e.amount), 0)
-        return {
-          id: b.id,
-          categoryId: b.categoryId,
-          categoryName: b.category.name,
-          categoryColor: b.category.color,
-          budgetAmount: Number(b.amount),
-          spent,
-          remaining: Number(b.amount) - spent,
-          percentage:
-            Number(b.amount) > 0 ? (spent / Number(b.amount)) * 100 : 0,
-        }
-      })
+      if (budgetRows.length > 0) {
+        budgets = budgetRows.map((b) => {
+          const spent = currentExpenses
+            .filter((e) => e.categoryId === b.categoryId)
+            .reduce((s, e) => s + Number(e.amount), 0)
+          return {
+            id: b.id,
+            categoryId: b.categoryId,
+            categoryName: b.category.name,
+            categoryColor: b.category.color,
+            budgetAmount: Number(b.amount),
+            spent,
+            remaining: Number(b.amount) - spent,
+            percentage:
+              Number(b.amount) > 0 ? (spent / Number(b.amount)) * 100 : 0,
+          }
+        })
+      } else {
+        const categories = await prisma.category.findMany({
+          where: { userId },
+          orderBy: { name: "asc" },
+        })
+        budgets = categories.map((c) => {
+          const spent = currentExpenses
+            .filter((e) => e.categoryId === c.id)
+            .reduce((s, e) => s + Number(e.amount), 0)
+          return {
+            id: c.id,
+            categoryId: c.id,
+            categoryName: c.name,
+            categoryColor: c.color,
+            budgetAmount: 0,
+            spent,
+            remaining: 0,
+            percentage: 0,
+          }
+        })
+      }
     }
 
     // ---- Insights ----

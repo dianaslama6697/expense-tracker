@@ -624,7 +624,7 @@ export default function Dashboard() {
                       type="button"
                       onClick={() => {
                         setEditingPocket(b)
-                        setPocketAmount(String(b.budgetAmount))
+                        setPocketAmount(String(b.budgetAmount || ""))
                       }}
                       className="w-full rounded-xl border border-transparent bg-zinc-50 p-3 text-left transition-colors hover:border-zinc-200 active:bg-zinc-100"
                     >
@@ -638,22 +638,28 @@ export default function Dashboard() {
                         </div>
                         <Pencil className="size-3 shrink-0 text-zinc-300" />
                       </div>
-                      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                        <span className={`text-lg font-bold ${isOver ? "text-red-600" : isWarning ? "text-amber-600" : "text-emerald-600"}`}>
-                          {formatCurrency(b.remaining)}
-                        </span>
-                        <span className="text-xs text-zinc-400">
-                          dari {formatCurrency(b.budgetAmount)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            isOver ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
-                          }`}
-                          style={{ width: `${Math.min(b.percentage, 100)}%` }}
-                        />
-                      </div>
+                      {b.budgetAmount > 0 ? (
+                        <>
+                          <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                            <span className={`text-lg font-bold ${isOver ? "text-red-600" : isWarning ? "text-amber-600" : "text-emerald-600"}`}>
+                              {formatCurrency(b.remaining)}
+                            </span>
+                            <span className="text-xs text-zinc-400">
+                              dari {formatCurrency(b.budgetAmount)}
+                            </span>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                isOver ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
+                              }`}
+                              style={{ width: `${Math.min(b.percentage, 100)}%` }}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-zinc-400">Ketuk untuk atur pocket</p>
+                      )}
                     </button>
                   )
                 })}
