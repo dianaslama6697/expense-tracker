@@ -146,6 +146,7 @@ export async function GET(req: NextRequest) {
           .reduce((s, e) => s + Number(e.amount), 0)
         return {
           id: b.id,
+          categoryId: b.categoryId,
           categoryName: b.category.name,
           categoryColor: b.category.color,
           budgetAmount: Number(b.amount),

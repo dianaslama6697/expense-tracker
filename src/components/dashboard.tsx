@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   Bell,
   Camera,
+  Pencil,
 } from "lucide-react"
 import {
   PieChart,
@@ -31,6 +32,7 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts"
+import { Drawer } from "vaul"
 import ScanReceipt, { type ScanReceiptHandle } from "@/components/scan_receipt"
 
 type CategoryItem = {
@@ -49,6 +51,7 @@ type DailyItem = {
 
 type BudgetItem = {
   id: string
+  categoryId: string
   categoryName: string
   categoryColor: string | null
   budgetAmount: number
@@ -126,6 +129,9 @@ export default function Dashboard() {
   const [monthOffset, setMonthOffset] = useState(0)
   const [showCustom, setShowCustom] = useState(false)
   const scanRef = useRef<ScanReceiptHandle>(null)
+  const [editingPocket, setEditingPocket] = useState<BudgetItem | null>(null)
+  const [pocketAmount, setPocketAmount] = useState("")
+  const [savingPocket, setSavingPocket] = useState(false)
 
   const buildParams = useCallback(() => {
     const now = new Date()
@@ -201,6 +207,29 @@ export default function Dashboard() {
   function navigateMonth(dir: 1 | -1) {
     if (preset === "thisMonth" || preset === "lastMonth") {
       setMonthOffset((m) => m + dir)
+    }
+  }
+
+  async function handleSavePocket() {
+    if (!editingPocket) return
+    setSavingPocket(true)
+    try {
+      const amount = Number(pocketAmount.replace(/[^0-9]/g, ""))
+      if (!amount) return
+      const res = await fetch("/api/v1/budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categoryId: editingPocket.categoryId || editingPocket.id,
+          amount,
+        }),
+      })
+      if (res.ok) {
+        setEditingPocket(null)
+        fetchData()
+      }
+    } finally {
+      setSavingPocket(false)
     }
   }
 
@@ -575,64 +604,122 @@ export default function Dashboard() {
           </div>
           </FadeIn>
 
-          {/* Budget tracking */}
+          {/* Pocket tracking */}
           {budgets.length > 0 && (
             <div className="rounded-2xl border bg-white p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Wallet className="size-4" />
-                <h3 className="text-sm font-medium">Budget</h3>
+                <h3 className="text-sm font-medium">Kantong</h3>
+                <span className="ml-auto text-xs text-zinc-400">
+                  Total {formatCurrency(budgets.reduce((s, b) => s + b.remaining, 0))}
+                </span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {budgets.map((b) => {
                   const isOver = b.percentage > 100
                   const isWarning = b.percentage >= 80 && b.percentage <= 100
                   return (
-                    <div key={b.id}>
-                      <div className="mb-1 flex items-center justify-between gap-2 text-xs sm:text-sm">
-                        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => {
+                        setEditingPocket(b)
+                        setPocketAmount(String(b.budgetAmount))
+                      }}
+                      className="w-full rounded-xl border border-transparent bg-zinc-50 p-3 text-left transition-colors hover:border-zinc-200 active:bg-zinc-100"
+                    >
+                      <div className="mb-1.5 flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
                           <div
-                            className="size-2 shrink-0 rounded-full sm:size-2.5"
-                            style={{
-                              backgroundColor: b.categoryColor || "#6b7280",
-                            }}
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: b.categoryColor || "#6b7280" }}
                           />
-                          <span className="truncate">{b.categoryName}</span>
+                          <span className="truncate text-sm font-medium">{b.categoryName}</span>
                         </div>
-                        <span
-                          className={`shrink-0 font-medium ${isOver ? "text-red-600" : ""} ${isWarning ? "text-amber-600" : ""}`}
-                        >
-                          <span className="hidden sm:inline">{formatCurrency(b.spent)} / {formatCurrency(b.budgetAmount)}</span>
-                          <span className="sm:hidden">{Math.round(b.percentage)}%</span>
+                        <Pencil className="size-3 shrink-0 text-zinc-300" />
+                      </div>
+                      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                        <span className={`text-lg font-bold ${isOver ? "text-red-600" : isWarning ? "text-amber-600" : "text-emerald-600"}`}>
+                          {formatCurrency(b.remaining)}
+                        </span>
+                        <span className="text-xs text-zinc-400">
+                          dari {formatCurrency(b.budgetAmount)}
                         </span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
                         <div
                           className={`h-full rounded-full transition-all ${
-                            isOver
-                              ? "bg-red-500"
-                              : isWarning
-                                ? "bg-amber-500"
-                                : "bg-emerald-500"
+                            isOver ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
                           }`}
                           style={{ width: `${Math.min(b.percentage, 100)}%` }}
                         />
                       </div>
-                      {isOver && (
-                        <p className="mt-0.5 text-xs text-red-500">
-                          {formatCurrency(Math.abs(b.remaining))} over budget!
-                        </p>
-                      )}
-                      {isWarning && !isOver && (
-                        <p className="mt-0.5 text-xs text-amber-600">
-                          Sisa {formatCurrency(b.remaining)}
-                        </p>
-                      )}
-                    </div>
+                    </button>
                   )
                 })}
               </div>
             </div>
           )}
+
+          {/* Pocket edit drawer */}
+          <Drawer.Root
+            open={!!editingPocket}
+            onClose={() => setEditingPocket(null)}
+          >
+            <Drawer.Portal>
+              <Drawer.Overlay className="fixed inset-0 bg-black/40" />
+              <Drawer.Content className="fixed bottom-0 left-0 right-0 rounded-t-2xl bg-white px-4 pb-8 pt-4 outline-none">
+                <Drawer.Handle />
+                <div className="mx-auto max-w-sm">
+                  <h3 className="mb-1 text-center text-sm font-medium">Atur Kantong</h3>
+                  {editingPocket && (
+                    <p className="mb-4 text-center text-xs text-zinc-400">
+                      {editingPocket.categoryName}
+                    </p>
+                  )}
+
+                  <div className="relative mb-4">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">
+                      Rp
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={pocketAmount}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, "")
+                        setPocketAmount(raw)
+                      }}
+                      className="w-full rounded-xl border px-8 py-3 text-lg font-semibold text-center focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  <div className="mb-4 flex gap-2">
+                    {[500000, 1000000, 1500000, 2000000].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setPocketAmount(String(preset))}
+                        className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200"
+                      >
+                        {formatCurrency(preset)}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={savingPocket || !pocketAmount}
+                    onClick={handleSavePocket}
+                    className="w-full rounded-xl bg-gray-900 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {savingPocket ? "Menyimpan..." : "Simpan"}
+                  </button>
+                </div>
+              </Drawer.Content>
+            </Drawer.Portal>
+          </Drawer.Root>
 
           {/* Pengeluaran terbaru */}
           <div className="rounded-lg border bg-white p-4">
