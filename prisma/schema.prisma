@@ -40,9 +40,11 @@ model User {
   expenses   Expense[]
   receipts   Receipt[]
   budgets    Budget[]
+  pockets    Pocket[]
   tags       Tag[]
   accounts   Account[]
   sessions   Session[]
+  splitBills SplitBill[]
 
   @@map("users")
 }
@@ -99,6 +101,7 @@ model Category {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expenses Expense[]
   budgets  Budget[]
+  pockets  PocketCategory[]
 
   @@map("categories")
 }
@@ -158,6 +161,34 @@ model Budget {
   @@map("budgets")
 }
 
+model Pocket {
+  id         String           @id @default(uuid())
+  userId     String           @map("user_id")
+  name       String
+  emoji      String?
+  color      String?
+  amount     Decimal
+  month      Int?
+  year       Int?
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories PocketCategory[]
+
+  @@map("pockets")
+}
+
+model PocketCategory {
+  pocketId   String   @map("pocket_id")
+  categoryId String   @map("category_id")
+
+  pocket   Pocket   @relation(fields: [pocketId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@id([pocketId, categoryId])
+  @@map("pocket_categories")
+}
+
 model Tag {
   id     String @id @default(uuid())
   userId String @map("user_id")
@@ -179,4 +210,61 @@ model ExpenseTag {
 
   @@id([expenseId, tagId])
   @@map("expense_tags")
+}
+
+model SplitBill {
+  id            String            @id @default(uuid())
+  userId        String            @map("user_id")
+  receiptId     String?           @map("receipt_id")
+  merchant      String?
+  totalAmount   Decimal           @db.Decimal(12,2) @map("total_amount")
+  tax           Decimal           @db.Decimal(12,2) @default(0)
+  serviceCharge Decimal           @db.Decimal(12,2) @default(0) @map("service_charge")
+  shareCode     String            @unique @map("share_code")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  persons       SplitBillPerson[]
+  items         SplitBillItem[]
+
+  @@map("split_bills")
+}
+
+model SplitBillPerson {
+  id          String                 @id @default(uuid())
+  splitBillId String                 @map("split_bill_id")
+  name        String
+  createdAt   DateTime               @default(now()) @map("created_at")
+
+  splitBill   SplitBill              @relation(fields: [splitBillId], references: [id], onDelete: Cascade)
+  assignments SplitBillAssignment[]
+
+  @@map("split_bill_persons")
+}
+
+model SplitBillItem {
+  id          String                 @id @default(uuid())
+  splitBillId String                 @map("split_bill_id")
+  name        String
+  price       Decimal                @db.Decimal(12,2)
+  quantity    Int                    @default(1)
+  createdAt   DateTime               @default(now()) @map("created_at")
+
+  splitBill   SplitBill              @relation(fields: [splitBillId], references: [id], onDelete: Cascade)
+  assignments SplitBillAssignment[]
+
+  @@map("split_bill_items")
+}
+
+model SplitBillAssignment {
+  id       String          @id @default(uuid())
+  personId String          @map("person_id")
+  itemId   String          @map("item_id")
+  quantity Int             @default(1)
+
+  person   SplitBillPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+  item     SplitBillItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, itemId])
+  @@map("split_bill_assignments")
 }

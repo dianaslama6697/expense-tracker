@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
             content: [
               {
                 type: "text",
-                text: 'Extract dari gambar ini. Bisa struk toko ATAU bukti transfer. Return ONLY valid JSON tanpa markdown: { type: "receipt"|"transfer", merchant, amount, date (YYYY-MM-DD), items?: [{name, price, quantity}], bankFrom?: string, bankTo?: string, description?: string }',
+                text: 'Scan struk ini. EKSTRAK SETIAP BARIS ITEM SATU PER SATU. JANGAN GABUNGIN ITEM. JANGAN BUAT ITEM "TOTAL". SEMUA item harus tercantum di array items. Return ONLY valid JSON tanpa markdown, tanpa komentar: { "type": "receipt", "merchant": string, "amount": number, "date": "YYYY-MM-DD", "items": [{ "name": string, "price": number, "quantity": number }], "description": string }',
               },
               {
                 type: "image_url",
@@ -143,7 +143,13 @@ export async function POST(req: NextRequest) {
         : Number(String(rawAmount).replace(/[^0-9.-]/g, "")) || 0
 
     const parsedDate = String(parsed.date || "")
-    const items = Array.isArray(parsed.items) ? parsed.items : []
+    const rawItems = Array.isArray(parsed.items) ? parsed.items : []
+    console.log("[SCAN] Raw items:", JSON.stringify(rawItems))
+    const items = rawItems.map((item: Record<string, unknown>) => ({
+      name: String(item.name ?? item.nama ?? item.nama_item ?? item.menu ?? ""),
+      price: Number(item.price ?? item.harga ?? item.harga_satuan ?? 0),
+      quantity: Number(item.quantity ?? item.qty ?? item.jumlah ?? item.quantity ?? 1),
+    }))
     const documentType = String(parsed.type || "receipt")
     const description = String(parsed.description || "")
     const bankFrom = String(parsed.bankFrom || "")

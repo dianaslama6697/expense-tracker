@@ -29,6 +29,9 @@
     --chart-4: 187 85% 40%;
     --chart-5: 221 83% 53%;
     --radius: 1rem;
+    --chart-grid: 0 0% 95.7%;
+    --chart-text: 0 0% 63.9%;
+    --chart-bar: 213 100% 44%;
   }
 
   .dark {
@@ -56,6 +59,9 @@
     --chart-3: 214 96% 41%;
     --chart-4: 187 85% 40%;
     --chart-5: 221 83% 53%;
+    --chart-grid: 0 0% 14.9%;
+    --chart-text: 0 0% 40%;
+    --chart-bar: 59 100% 50%;
   }
 }
 
@@ -65,9 +71,16 @@
   }
 }
 
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
+    transition: background-color 0.2s ease, color 0.1s ease;
   }
   body {
     @apply bg-background text-foreground;

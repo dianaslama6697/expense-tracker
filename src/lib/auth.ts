@@ -57,6 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         { name: "Tagihan", icon: "file-text", color: "#3b82f6" },
         { name: "Kesehatan", icon: "heart-pulse", color: "#ec4899" },
         { name: "Pendidikan", icon: "book-open", color: "#8b5cf6" },
+        { name: "Olahraga", icon: "dumbbell", color: "#a855f7" },
         { name: "Lainnya", icon: "more-horizontal", color: "#6b7280" },
       ]
       await prisma.category.createMany({

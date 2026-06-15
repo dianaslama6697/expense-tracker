@@ -3,11 +3,12 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [registering, setRegistering] = useState(false)
   const [name, setName] = useState("")
@@ -52,10 +53,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f1f4f7] p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-sm">
         <h1 className="mb-1 text-center text-2xl font-bold">Expense Tracker</h1>
-        <p className="mb-6 text-center text-sm text-zinc-500">
+        <p className="mb-6 text-center text-sm text-muted-foreground">
           {registering
             ? "Buat akun baru"
             : "Masuk untuk mengelola pengeluaran"}
@@ -68,7 +69,7 @@ export default function LoginPage() {
               placeholder="Nama"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
           )}
           <input
@@ -77,17 +78,26 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="w-full rounded-xl border px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
 
           {error && (
             <p className="text-xs text-red-500">{error}</p>
@@ -103,8 +113,8 @@ export default function LoginPage() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t" />
           </div>
-          <div className="relative flex justify-center text-xs text-zinc-400">
-            <span className="bg-white px-2">atau</span>
+          <div className="relative flex justify-center text-xs text-muted-foreground">
+            <span className="bg-card px-2">atau</span>
           </div>
         </div>
 
@@ -123,7 +133,7 @@ export default function LoginPage() {
             setRegistering(!registering)
             setError("")
           }}
-          className="mt-4 w-full text-center text-sm text-zinc-500 hover:text-zinc-700"
+          className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground"
         >
           {registering
             ? "Sudah punya akun? Masuk"

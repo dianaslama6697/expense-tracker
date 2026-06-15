@@ -90,6 +90,12 @@ export default function ExpenseList() {
     fetchCategories()
   }, [fetchExpenses, fetchCategories])
 
+  useEffect(() => {
+    const handler = () => fetchExpenses()
+    window.addEventListener("refresh-data", handler)
+    return () => window.removeEventListener("refresh-data", handler)
+  }, [fetchExpenses])
+
   function resetForm() {
     setForm(emptyForm)
     setEditingId(null)
@@ -238,7 +244,7 @@ export default function ExpenseList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-zinc-400" />
+        <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
       </div>
     )
   }
@@ -247,7 +253,7 @@ export default function ExpenseList() {
     <div className="space-y-6">
       {/* Ringkasan */}
       <FadeIn>
-        <div className="rounded-2xl border bg-white p-5">
+        <div className="rounded-2xl border bg-white p-5 dark:bg-zinc-900">
           <p className="text-sm text-sky-600">Pengeluaran Bulan Ini</p>
           <p className="text-2xl font-bold">{formatCurrency(currentMonthTotal)}</p>
         </div>
@@ -265,27 +271,27 @@ export default function ExpenseList() {
       <Drawer.Root open={showForm} onOpenChange={(open) => { if (!open) resetForm() }}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-4xl rounded-t-[16px] bg-white px-4 pb-8 pt-3 focus:outline-none">
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-zinc-300" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-4xl rounded-t-[16px] bg-white px-4 pb-8 pt-3 focus:outline-none dark:bg-zinc-900">
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-zinc-300 dark:bg-zinc-700" />
             <h3 className="mb-3 font-medium">
               {editingId ? "Edit Pengeluaran" : "Tambah Pengeluaran"}
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">
+                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Jumlah (Rp)
                 </label>
                 <input
                   type="number"
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                   placeholder="0"
                   min="0"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">
+                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Merchant
                 </label>
                 <MerchantInput
@@ -296,7 +302,7 @@ export default function ExpenseList() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">
+                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Kategori
                 </label>
                 <select
@@ -304,7 +310,7 @@ export default function ExpenseList() {
                   onChange={(e) =>
                     setForm({ ...form, categoryId: e.target.value })
                   }
-                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                 >
                   <option value="">Pilih kategori</option>
                   {categories.map((cat) => (
@@ -321,7 +327,7 @@ export default function ExpenseList() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-zinc-700">
+                  <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     Tanggal
                   </label>
                   <input
@@ -330,12 +336,12 @@ export default function ExpenseList() {
                     onChange={(e) =>
                       setForm({ ...form, expenseDate: e.target.value })
                     }
-                    className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                   />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">
+                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Deskripsi
                 </label>
                 <input
@@ -344,7 +350,7 @@ export default function ExpenseList() {
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
-                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                   placeholder="Opsional"
                 />
               </div>
@@ -367,7 +373,7 @@ export default function ExpenseList() {
 
       {/* Daftar pengeluaran */}
       {sortedMonths.length === 0 ? (
-        <p className="py-10 text-center text-sm text-zinc-400">
+        <p className="py-10 text-center text-sm text-zinc-400 dark:text-zinc-500">
           Belum ada pengeluaran
         </p>
       ) : (
@@ -380,7 +386,7 @@ export default function ExpenseList() {
           return (
           <div key={key}>
             <div className="mb-2 flex items-baseline justify-between">
-              <h3 className="text-sm font-semibold text-zinc-700">
+              <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 {grouped[key].label}
               </h3>
               <p className="text-xs font-medium text-zinc-500">
@@ -390,7 +396,7 @@ export default function ExpenseList() {
             <StaggerList className="space-y-2">
               {visible.map((expense) => (
                 <StaggerItem key={expense.id}>
-                  <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3"
+                  <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2.5 dark:bg-zinc-900 sm:gap-3 sm:px-4 sm:py-3"
                 >
                   <div
                     className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white sm:size-9 sm:text-xs"
@@ -404,7 +410,7 @@ export default function ExpenseList() {
                     <p className="truncate text-sm font-medium">
                       {expense.merchant || expense.description || expense.category.name}
                     </p>
-                    <p className="truncate text-xs text-zinc-400">
+                    <p className="truncate text-xs text-zinc-400 dark:text-zinc-500">
                       {expense.category.name}
                       {expense.description && expense.merchant
                         ? ` - ${expense.description}`
@@ -415,7 +421,7 @@ export default function ExpenseList() {
                     <p className="text-xs font-semibold sm:text-sm">
                       {formatCurrency(Number(expense.amount))}
                     </p>
-                    <p className="text-[11px] text-zinc-400 sm:text-xs">
+                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500 sm:text-xs">
                       {format(new Date(expense.expenseDate), "d MMM", {
                         locale: id,
                       })}
@@ -424,7 +430,7 @@ export default function ExpenseList() {
                   <div className="flex gap-0.5 sm:gap-1">
                     <button
                       onClick={() => handleCopy(expense)}
-                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-sky-100 hover:text-blue-600 sm:p-1.5"
+                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-sky-100 hover:text-blue-600 dark:text-zinc-500 dark:hover:bg-sky-950/40 dark:hover:text-blue-400 sm:p-1.5"
                       title="Duplikat dengan tanggal hari ini"
                     >
                       {copiedId === expense.id ? (
@@ -435,13 +441,13 @@ export default function ExpenseList() {
                     </button>
                     <button
                       onClick={() => openEdit(expense)}
-                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-sky-100 hover:text-blue-600 sm:p-1.5"
+                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-sky-100 hover:text-blue-600 dark:text-zinc-500 dark:hover:bg-sky-950/40 dark:hover:text-blue-400 sm:p-1.5"
                     >
                       <Pencil className="size-3.5 sm:size-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(expense.id)}
-                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 sm:p-1.5"
+                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-zinc-500 dark:hover:bg-red-950/40 dark:hover:text-red-400 sm:p-1.5"
                     >
                       <Trash2 className="size-3.5 sm:size-4" />
                     </button>
@@ -453,7 +459,7 @@ export default function ExpenseList() {
             {hidden > 0 && (
               <button
                 onClick={() => setVisibleCounts((prev) => ({ ...prev, [key]: (prev[key] || 10) + 10 }))}
-                className="mt-1 w-full rounded-xl border border-dashed py-2 text-xs font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-700"
+                className="mt-1 w-full rounded-xl border border-dashed py-2 text-xs font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-300"
               >
                 Tampilkan 10 lainnya ({hidden} tersisa)
               </button>

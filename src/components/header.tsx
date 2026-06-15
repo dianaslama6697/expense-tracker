@@ -2,43 +2,41 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
+import { Moon, Sun } from "lucide-react"
+import { useTheme } from "@/components/providers"
 
 export default function Header() {
   const { data: session } = useSession()
+  const { theme, toggleTheme } = useTheme()
 
   return (
-    <header className="sticky top-0 z-10 border-b bg-white">
-      <div className="mx-auto flex h-12 max-w-4xl items-center justify-between px-3 sm:h-14 sm:px-4">
-        <Link href="/" className="text-sm font-semibold sm:text-lg">
+    <header className="sticky top-0 z-10 border-b bg-background">
+      <div className="mx-auto flex h-11 max-w-4xl items-center justify-between px-3 sm:h-12 sm:px-4">
+        <Link href="/" className="text-sm font-semibold sm:text-base">
           Expense Tracker
         </Link>
-        <nav className="flex items-center gap-3 text-xs sm:gap-4 sm:text-sm">
-          <Link
-            href="/"
-            className="text-sky-600 transition-colors hover:text-blue-700"
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={toggleTheme}
+            className="rounded-full p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            aria-label="Toggle dark mode"
           >
-            Dashboard
-          </Link>
-          <Link
-            href="/expenses"
-            className="text-sky-600 transition-colors hover:text-blue-700"
-          >
-            Pengeluaran
-          </Link>
+            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
           {session?.user && (
-            <div className="flex items-center gap-2 border-l pl-3 sm:pl-4">
-              <span className="hidden max-w-[120px] truncate text-gray-600 sm:inline">
+            <>
+              <span className="max-w-[100px] truncate text-xs text-zinc-500 dark:text-zinc-400 sm:max-w-[140px] sm:text-sm">
                 {session.user.name ?? session.user.email}
               </span>
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                className="rounded-full bg-gray-900 px-3 py-1 text-white transition-colors hover:bg-gray-700"
+                className="rounded-full bg-gray-900 px-2.5 py-0.5 text-xs text-white transition-colors hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-zinc-200 sm:px-3 sm:py-1 sm:text-sm"
               >
-                Logout
+                Keluar
               </button>
-            </div>
+            </>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   )

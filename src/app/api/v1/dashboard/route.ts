@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
 
+function toLocalDateStr(date: Date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
+
 export async function GET(req: NextRequest) {
   try {
     const userId = await getUserId()
@@ -121,60 +128,36 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Budget (only for current month view)
-    const nowMonth = now.getMonth()
-    const nowYear = now.getFullYear()
-    const isCurrentMonth =
-      startDate.getMonth() === nowMonth &&
-      startDate.getFullYear() === nowYear
-
-    let budgets: Record<string, unknown>[] = []
-    if (isCurrentMonth && !categoryId) {
-      const budgetRows = await prisma.budget.findMany({
-        where: {
-          userId: userId,
-          period: "monthly",
-          month: nowMonth + 1,
-          year: nowYear,
+    let pocketsData: Record<string, unknown>[] = []
+    if (!categoryId) {
+      const pocketRows = await prisma.pocket.findMany({
+        where: { userId },
+        include: {
+          categories: { include: { category: true } },
         },
-        include: { category: true },
+        orderBy: { createdAt: "asc" },
       })
 
-      if (budgetRows.length > 0) {
-        budgets = budgetRows.map((b) => {
+      if (pocketRows.length > 0) {
+        pocketsData = pocketRows.map((p) => {
+          const categoryIds = p.categories.map((pc) => pc.categoryId)
           const spent = currentExpenses
-            .filter((e) => e.categoryId === b.categoryId)
+            .filter((e) => categoryIds.includes(e.categoryId))
             .reduce((s, e) => s + Number(e.amount), 0)
           return {
-            id: b.id,
-            categoryId: b.categoryId,
-            categoryName: b.category.name,
-            categoryColor: b.category.color,
-            budgetAmount: Number(b.amount),
+            id: p.id,
+            name: p.name,
+            emoji: p.emoji,
+            color: p.color,
+            budgetAmount: Number(p.amount),
             spent,
-            remaining: Number(b.amount) - spent,
-            percentage:
-              Number(b.amount) > 0 ? (spent / Number(b.amount)) * 100 : 0,
-          }
-        })
-      } else {
-        const categories = await prisma.category.findMany({
-          where: { userId },
-          orderBy: { name: "asc" },
-        })
-        budgets = categories.map((c) => {
-          const spent = currentExpenses
-            .filter((e) => e.categoryId === c.id)
-            .reduce((s, e) => s + Number(e.amount), 0)
-          return {
-            id: c.id,
-            categoryId: c.id,
-            categoryName: c.name,
-            categoryColor: c.color,
-            budgetAmount: 0,
-            spent,
-            remaining: 0,
-            percentage: 0,
+            remaining: Number(p.amount) - spent,
+            percentage: Number(p.amount) > 0 ? (spent / Number(p.amount)) * 100 : 0,
+            categories: p.categories.map((pc) => ({
+              id: pc.category.id,
+              name: pc.category.name,
+              color: pc.category.color,
+            })),
           }
         })
       }
@@ -228,24 +211,20 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4. Budget alert
-    for (const b of budgets) {
-      const budgetItem = b as {
-        categoryName: string
-        percentage: number
-        remaining: number
-      }
-      if (budgetItem.percentage >= 80 && budgetItem.percentage < 100) {
+    // 4. Pocket alert
+    for (const bp of pocketsData) {
+      const p = bp as { name: string; percentage: number }
+      if (p.percentage >= 80 && p.percentage < 100) {
         insights.push({
           type: "warning",
           icon: "wallet",
-          message: `Budget ${budgetItem.categoryName} sudah terpakai ${Math.round(budgetItem.percentage)}%`,
+          message: `Pocket ${p.name} sudah terpakai ${Math.round(p.percentage)}%`,
         })
-      } else if (budgetItem.percentage >= 100) {
+      } else if (p.percentage >= 100) {
         insights.push({
           type: "danger",
           icon: "alert-triangle",
-          message: `Budget ${budgetItem.categoryName} sudah over budget!`,
+          message: `Pocket ${p.name} sudah habis!`,
         })
       }
     }
@@ -281,8 +260,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       period: {
-        start: startDate.toISOString().split("T")[0],
-        end: endDate.toISOString().split("T")[0],
+        start: toLocalDateStr(startDate),
+        end: toLocalDateStr(endDate),
         days: diffDays,
       },
       currentPeriod: {
@@ -299,7 +278,7 @@ export async function GET(req: NextRequest) {
       changePercent: Math.round(changePercent * 100) / 100,
       byCategory,
       dailyTotals,
-      budgets,
+      budgets: pocketsData,
       insights,
       recentExpenses: currentExpenses.slice(0, 5),
     })

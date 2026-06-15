@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { format } from "date-fns"
 import { id as localeId } from "date-fns/locale"
 import { FadeIn, StaggerList, StaggerItem } from "@/components/motion_wrappers"
@@ -17,7 +17,6 @@ import {
   AlertCircle,
   ShoppingBag,
   Bell,
-  Camera,
   Pencil,
 } from "lucide-react"
 import {
@@ -33,7 +32,6 @@ import {
   CartesianGrid,
 } from "recharts"
 import { Drawer } from "vaul"
-import ScanReceipt, { type ScanReceiptHandle } from "@/components/scan_receipt"
 
 type CategoryItem = {
   categoryId: string
@@ -49,15 +47,16 @@ type DailyItem = {
   total: number
 }
 
-type BudgetItem = {
+type PocketItem = {
   id: string
-  categoryId: string
-  categoryName: string
-  categoryColor: string | null
+  name: string
+  emoji: string | null
+  color: string | null
   budgetAmount: number
   spent: number
   remaining: number
   percentage: number
+  categories: { id: string; name: string; color: string | null }[]
 }
 
 type Category = {
@@ -93,7 +92,7 @@ type DashboardData = {
   changePercent: number
   byCategory: CategoryItem[]
   dailyTotals: DailyItem[]
-  budgets: BudgetItem[]
+  budgets: PocketItem[]
   insights: Insight[]
   recentExpenses: ExpenseItem[]
 }
@@ -116,6 +115,13 @@ function formatLabel(start: string, end: string) {
   return `${format(s, "d MMM", { locale: localeId })} - ${format(e, "d MMM yyyy", { locale: localeId })}`
 }
 
+function toLocalDateStr(date: Date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
+
 type Preset = "thisMonth" | "lastMonth" | "last3Months" | "thisYear" | "custom"
 
 export default function Dashboard() {
@@ -128,8 +134,7 @@ export default function Dashboard() {
   const [categoryId, setCategoryId] = useState("")
   const [monthOffset, setMonthOffset] = useState(0)
   const [showCustom, setShowCustom] = useState(false)
-  const scanRef = useRef<ScanReceiptHandle>(null)
-  const [editingPocket, setEditingPocket] = useState<BudgetItem | null>(null)
+  const [editingPocket, setEditingPocket] = useState<PocketItem | null>(null)
   const [pocketAmount, setPocketAmount] = useState("")
   const [savingPocket, setSavingPocket] = useState(false)
 
@@ -142,20 +147,20 @@ export default function Dashboard() {
       const m = now.getMonth() + monthOffset
       const s = new Date(y, m, 1)
       const e = new Date(y, m + 1, 0)
-      params.set("start", s.toISOString().split("T")[0])
-      params.set("end", e.toISOString().split("T")[0])
+      params.set("start", toLocalDateStr(s))
+      params.set("end", toLocalDateStr(e))
     } else if (preset === "lastMonth") {
       const y = now.getFullYear()
       const m = now.getMonth() - 1 + monthOffset
       const s = new Date(y, m, 1)
       const e = new Date(y, m + 1, 0)
-      params.set("start", s.toISOString().split("T")[0])
-      params.set("end", e.toISOString().split("T")[0])
+      params.set("start", toLocalDateStr(s))
+      params.set("end", toLocalDateStr(e))
     } else if (preset === "last3Months") {
       const e = new Date(now.getFullYear(), now.getMonth() + 1 + monthOffset, 0)
       const s = new Date(e.getFullYear(), e.getMonth() - 2, 1)
-      params.set("start", s.toISOString().split("T")[0])
-      params.set("end", e.toISOString().split("T")[0])
+      params.set("start", toLocalDateStr(s))
+      params.set("end", toLocalDateStr(e))
     } else if (preset === "thisYear") {
       const y = now.getFullYear()
       params.set("start", `${y}-01-01`)
@@ -198,6 +203,12 @@ export default function Dashboard() {
     fetchCategories()
   }, [])
 
+  useEffect(() => {
+    const handler = () => fetchData()
+    window.addEventListener("refresh-data", handler)
+    return () => window.removeEventListener("refresh-data", handler)
+  }, [fetchData])
+
   function handlePresetChange(p: Preset) {
     setPreset(p)
     setShowCustom(p === "custom")
@@ -216,13 +227,10 @@ export default function Dashboard() {
     try {
       const amount = Number(pocketAmount.replace(/[^0-9]/g, ""))
       if (!amount) return
-      const res = await fetch("/api/v1/budgets", {
-        method: "POST",
+      const res = await fetch(`/api/v1/pockets/${editingPocket.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          categoryId: editingPocket.categoryId || editingPocket.id,
-          amount,
-        }),
+        body: JSON.stringify({ amount }),
       })
       if (res.ok) {
         setEditingPocket(null)
@@ -237,9 +245,9 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center py-20">
         {loading ? (
-          <Loader2 className="size-6 animate-spin text-zinc-400" />
+          <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
         ) : (
-          <p className="text-sm text-zinc-400">Gagal memuat dashboard</p>
+          <p className="text-sm text-zinc-400 dark:text-zinc-500">Gagal memuat dashboard</p>
         )}
       </div>
     )
@@ -265,7 +273,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Filter bar */}
-      <div className="space-y-3 rounded-2xl border bg-white p-4 sm:p-5">
+      <div className="space-y-3 rounded-2xl border bg-white dark:bg-zinc-900 p-4 sm:p-5">
         <div className="flex flex-wrap gap-1.5">
           {(["thisMonth", "lastMonth", "last3Months", "thisYear"] as Preset[]).map(
             (p) => (
@@ -298,13 +306,6 @@ export default function Dashboard() {
           >
             Kustom
           </button>
-          <button
-            onClick={() => scanRef.current?.openPicker()}
-            className="ml-auto flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-medium text-white transition-colors hover:bg-blue-700 sm:text-xs"
-          >
-            <Camera className="size-3.5" />
-            Scan Struk
-          </button>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -313,13 +314,13 @@ export default function Dashboard() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigateMonth(-1)}
-                className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                className="rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
               >
                 <ChevronLeft className="size-4" />
               </button>
               <button
                 onClick={() => navigateMonth(1)}
-                className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                className="rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -340,7 +341,7 @@ export default function Dashboard() {
                 onChange={(e) => setStartDate(e.target.value)}
                 className="min-w-0 flex-1 rounded-xl border px-3 py-1.5 text-xs sm:min-w-0 sm:flex-none"
               />
-              <span className="text-xs text-zinc-400">—</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">—</span>
               <input
                 type="date"
                 value={endDate}
@@ -355,7 +356,7 @@ export default function Dashboard() {
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="rounded-xl border px-3 py-1.5 text-xs"
+              className="rounded-xl border px-3 py-1.5 text-xs dark:bg-zinc-800 dark:text-zinc-100"
             >
               <option value="">Semua kategori</option>
               {categories.map((cat) => (
@@ -373,37 +374,35 @@ export default function Dashboard() {
         <div className="space-y-2">
           {insights.map((insight, i) => {
             const Icon = insightIcon(insight.icon)
-            const borderColor =
-              insight.type === "warning"
-                ? "border-amber-200 bg-amber-50"
-                : insight.type === "danger"
-                  ? "border-red-200 bg-red-50"
-                  : insight.type === "success"
-                    ? "border-emerald-200 bg-emerald-50"
-                    : "border-blue-200 bg-blue-50"
-            const textColor =
-              insight.type === "warning"
-                ? "text-amber-800"
-                : insight.type === "danger"
-                  ? "text-red-800"
-                  : insight.type === "success"
-                    ? "text-emerald-800"
-                    : "text-blue-800"
-            const iconColor =
-              insight.type === "warning"
-                ? "text-amber-600"
-                : insight.type === "danger"
-                  ? "text-red-600"
-                  : insight.type === "success"
-                    ? "text-emerald-600"
-                    : "text-blue-600"
+            const insightTypeStyle: Record<string, { borderBg: string; text: string; icon: string }> = {
+              warning: {
+                borderBg: "border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30",
+                text: "text-amber-800 dark:text-amber-300",
+                icon: "text-amber-600 dark:text-amber-400",
+              },
+              danger: {
+                borderBg: "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/30",
+                text: "text-red-800 dark:text-red-300",
+                icon: "text-red-600 dark:text-red-400",
+              },
+              success: {
+                borderBg: "border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/30",
+                text: "text-emerald-800 dark:text-emerald-300",
+                icon: "text-emerald-600 dark:text-emerald-400",
+              },
+              info: {
+                borderBg: "border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/30",
+                text: "text-blue-800 dark:text-blue-300",
+                icon: "text-blue-600 dark:text-blue-400",
+              },
+            }
             return (
               <div
                 key={i}
-                className={`flex items-start gap-2 rounded-lg border p-3 ${borderColor}`}
+                className={`flex items-start gap-2 rounded-lg border p-3 ${insightTypeStyle[insight.type]?.borderBg || "border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/30"}`}
               >
-                <Icon className={`mt-0.5 size-4 shrink-0 ${iconColor}`} />
-                <p className={`text-sm ${textColor}`}>{insight.message}</p>
+                <Icon className={`mt-0.5 size-4 shrink-0 ${insightTypeStyle[insight.type]?.icon || "text-blue-600 dark:text-blue-400"}`} />
+                <p className={`text-sm ${insightTypeStyle[insight.type]?.text || "text-blue-800 dark:text-blue-300"}`}>{insight.message}</p>
               </div>
             )
           })}
@@ -412,29 +411,29 @@ export default function Dashboard() {
 
       {loading ? (
         <div className="flex items-center justify-center py-10">
-          <Loader2 className="size-6 animate-spin text-zinc-400" />
+          <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
         </div>
       ) : (
         <>
           {/* Kartu ringkasan */}
           <FadeIn>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-2xl border bg-white p-4">
+            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
               <p className="text-xs text-sky-600">Total</p>
               <p className="text-lg font-bold">
                 {formatCurrency(currentPeriod.total)}
               </p>
-              <p className="mt-1 text-xs text-zinc-400">
+              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
                 {currentPeriod.count} transaksi
               </p>
             </div>
-            <div className="rounded-2xl border bg-white p-4">
+            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
               <p className="text-xs text-sky-600">Rata-rata / hari</p>
               <p className="text-lg font-bold">
                 {formatCurrency(Math.round(currentPeriod.averagePerDay))}
               </p>
             </div>
-            <div className="rounded-2xl border bg-white p-4">
+            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
               <p className="text-xs text-sky-600">Periode sebelumnya</p>
               <p className="text-lg font-bold">
                 {formatCurrency(previousPeriod.total)}
@@ -455,16 +454,16 @@ export default function Dashboard() {
                     </span>
                   </>
                 ) : (
-                  <span className="text-zinc-400">0%</span>
+                  <span className="text-zinc-400 dark:text-zinc-500">0%</span>
                 )}
               </div>
             </div>
-            <div className="rounded-2xl border bg-white p-4">
+            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
               <p className="text-xs text-sky-600">Hari terlewat</p>
               <p className="text-lg font-bold">
                 {currentPeriod.daysSoFar}/{data.period.days}
               </p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                 <div
                   className="h-full rounded-full bg-blue-600 transition-all"
                   style={{
@@ -478,7 +477,7 @@ export default function Dashboard() {
 
           {/* Grafik per kategori */}
           <FadeIn delay={0.1}>
-          <div className="rounded-lg border bg-white p-4">
+          <div className="rounded-lg border bg-white dark:bg-zinc-900 p-4">
             <div className="mb-3 flex items-center gap-2">
               <PieChartIcon className="size-4" />
               <h3 className="text-sm font-medium">
@@ -486,7 +485,7 @@ export default function Dashboard() {
               </h3>
             </div>
             {byCategory.length === 0 ? (
-              <p className="py-6 text-center text-sm text-zinc-400">
+              <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-500">
                 Belum ada data
               </p>
             ) : (
@@ -537,7 +536,7 @@ export default function Dashboard() {
                           {formatCurrency(cat.total)}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -556,28 +555,28 @@ export default function Dashboard() {
 
           {/* Grafik tren harian */}
           <FadeIn delay={0.2}>
-          <div className="rounded-lg border bg-white p-4">
+          <div className="rounded-lg border bg-white dark:bg-zinc-900 p-4">
             <div className="mb-3 flex items-center gap-2">
               <BarChartIcon className="size-4" />
               <h3 className="text-sm font-medium">Tren Harian</h3>
             </div>
             {dailyTotals.length === 0 ||
             dailyTotals.every((d) => d.total === 0) ? (
-              <p className="py-6 text-center text-sm text-zinc-400">
+              <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-500">
                 Belum ada data
               </p>
             ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={dailyTotals}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
                   <XAxis
                     dataKey="day"
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                    tick={{ fontSize: 11, fill: "hsl(var(--chart-text))" }}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                    tick={{ fontSize: 11, fill: "hsl(var(--chart-text))" }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(v: number) =>
@@ -594,7 +593,7 @@ export default function Dashboard() {
                   />
                   <Bar
                     dataKey="total"
-                    fill="#2563eb"
+                    fill="hsl(var(--chart-bar))"
                     radius={[3, 3, 0, 0]}
                     maxBarSize={24}
                   />
@@ -606,11 +605,11 @@ export default function Dashboard() {
 
           {/* Pocket tracking */}
           {budgets.length > 0 && (
-            <div className="rounded-2xl border bg-white p-4">
+            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Wallet className="size-4" />
                 <h3 className="text-sm font-medium">Kantong</h3>
-                <span className="ml-auto text-xs text-zinc-400">
+                <span className="ml-auto text-xs text-zinc-400 dark:text-zinc-500">
                   Total {formatCurrency(budgets.reduce((s, b) => s + b.remaining, 0))}
                 </span>
               </div>
@@ -626,29 +625,26 @@ export default function Dashboard() {
                         setEditingPocket(b)
                         setPocketAmount(String(b.budgetAmount || ""))
                       }}
-                      className="w-full rounded-xl border border-transparent bg-zinc-50 p-3 text-left transition-colors hover:border-zinc-200 active:bg-zinc-100"
+                      className="w-full rounded-xl border border-transparent bg-zinc-50 p-3 text-left transition-colors hover:border-zinc-200 active:bg-zinc-100 dark:bg-zinc-800 dark:hover:border-zinc-700 dark:active:bg-zinc-700"
                     >
                       <div className="mb-1.5 flex items-center justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2">
-                          <div
-                            className="size-2.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: b.categoryColor || "#6b7280" }}
-                          />
-                          <span className="truncate text-sm font-medium">{b.categoryName}</span>
+                          <span className="text-lg">{b.emoji || "👜"}</span>
+                          <span className="truncate text-sm font-medium">{b.name}</span>
                         </div>
-                        <Pencil className="size-3 shrink-0 text-zinc-300" />
+                        <Pencil className="size-3 shrink-0 text-zinc-300 dark:text-zinc-600" />
                       </div>
                       {b.budgetAmount > 0 ? (
                         <>
                           <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                            <span className={`text-lg font-bold ${isOver ? "text-red-600" : isWarning ? "text-amber-600" : "text-emerald-600"}`}>
+                            <span className={`text-lg font-bold ${isOver ? "text-red-600 dark:text-red-400" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                               {formatCurrency(b.remaining)}
                             </span>
-                            <span className="text-xs text-zinc-400">
+                            <span className="text-xs text-zinc-400 dark:text-zinc-500">
                               dari {formatCurrency(b.budgetAmount)}
                             </span>
                           </div>
-                          <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+                          <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
                             <div
                               className={`h-full rounded-full transition-all ${
                                 isOver ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
@@ -656,9 +652,21 @@ export default function Dashboard() {
                               style={{ width: `${Math.min(b.percentage, 100)}%` }}
                             />
                           </div>
+                          {b.categories.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {b.categories.map((c) => (
+                                <span
+                                  key={c.id}
+                                  className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 dark:text-zinc-400"
+                                >
+                                  {c.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </>
                       ) : (
-                        <p className="text-sm text-zinc-400">Ketuk untuk atur pocket</p>
+                        <p className="text-sm text-zinc-400 dark:text-zinc-500">Ketuk untuk atur pocket</p>
                       )}
                     </button>
                   )
@@ -674,18 +682,18 @@ export default function Dashboard() {
           >
             <Drawer.Portal>
               <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-              <Drawer.Content className="fixed bottom-0 left-0 right-0 rounded-t-2xl bg-white px-4 pb-8 pt-4 outline-none">
+              <Drawer.Content className="fixed bottom-0 left-0 right-0 rounded-t-2xl bg-white dark:bg-zinc-900 px-4 pb-8 pt-4 outline-none">
                 <Drawer.Handle />
                 <div className="mx-auto max-w-sm">
                   <h3 className="mb-1 text-center text-sm font-medium">Atur Kantong</h3>
                   {editingPocket && (
-                    <p className="mb-4 text-center text-xs text-zinc-400">
-                      {editingPocket.categoryName}
+                    <p className="mb-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                      {editingPocket.name}
                     </p>
                   )}
 
                   <div className="relative mb-4">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400 dark:text-zinc-500">
                       Rp
                     </span>
                     <input
@@ -707,7 +715,7 @@ export default function Dashboard() {
                         key={preset}
                         type="button"
                         onClick={() => setPocketAmount(String(preset))}
-                        className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200"
+                        className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200"
                       >
                         {formatCurrency(preset)}
                       </button>
@@ -718,7 +726,7 @@ export default function Dashboard() {
                     type="button"
                     disabled={savingPocket || !pocketAmount}
                     onClick={handleSavePocket}
-                    className="w-full rounded-xl bg-gray-900 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    className="w-full rounded-xl bg-gray-900 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-zinc-200"
                   >
                     {savingPocket ? "Menyimpan..." : "Simpan"}
                   </button>
@@ -728,10 +736,10 @@ export default function Dashboard() {
           </Drawer.Root>
 
           {/* Pengeluaran terbaru */}
-          <div className="rounded-lg border bg-white p-4">
+          <div className="rounded-lg border bg-white dark:bg-zinc-900 p-4">
             <h3 className="mb-3 text-sm font-medium">Pengeluaran Terbaru</h3>
             {data.recentExpenses.length === 0 ? (
-              <p className="py-3 text-center text-sm text-zinc-400">
+              <p className="py-3 text-center text-sm text-zinc-400 dark:text-zinc-500">
                 Belum ada pengeluaran
               </p>
             ) : (
@@ -758,7 +766,7 @@ export default function Dashboard() {
                       <p className="text-sm font-medium">
                         {formatCurrency(Number(exp.amount))}
                       </p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500">
                         {format(
                           new Date(exp.expenseDate),
                           "d MMM",
@@ -773,8 +781,6 @@ export default function Dashboard() {
           </div>
         </>
       )}
-
-      <ScanReceipt ref={scanRef} onScanned={fetchData} />
     </div>
   )
 }
