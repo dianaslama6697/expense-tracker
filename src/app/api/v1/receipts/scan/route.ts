@@ -57,10 +57,10 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Kompres gambar sekecil mungkin
+    // Kompres gambar — resolusi cukup besar biar teks struk terbaca
     const compressed = await sharp(buffer)
-      .resize(480, 640, { fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 50 })
+      .resize(1200, 1600, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 80 })
       .toBuffer()
 
     // Convert ke base64
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
             ],
           },
         ],
-        max_tokens: 800,
+        max_tokens: 1200,
         temperature: 0.05,
       }),
     })
