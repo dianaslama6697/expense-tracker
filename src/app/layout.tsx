@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Toaster } from "sonner"
 import RegisterSW from "@/components/register_sw"
@@ -13,6 +13,13 @@ const inter = Inter({
   variable: "--font-sans",
 })
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
 export const metadata: Metadata = {
   title: "Expense Tracker",
   description: "Track your expenses with ease",
@@ -23,8 +30,8 @@ export const metadata: Metadata = {
     title: "Expense Tracker",
   },
   icons: [
-    { rel: "icon", url: "/icons/icon.svg" },
-    { rel: "apple-touch-icon", url: "/icons/icon-192.svg" },
+    { rel: "icon", url: "/icons/icon.svg", type: "image/svg+xml" },
+    { rel: "apple-touch-icon", url: "/icons/icon-180.png" },
   ],
   other: {
     "theme-color": "#ffffff",
