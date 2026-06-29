@@ -75,19 +75,23 @@ function calculatePerPerson(
   }, 0)
 
   const personCount = persons.length || 1
-  const unassignedShare = unassignedTotal / personCount
+  const unassignedShare = Math.round(unassignedTotal / personCount)
   const taxableTotal = totalItems || 1
   const totalTax = tax + serviceCharge
 
   const result = persons.map((p) => {
     const itemTotal = personItemTotals[p.tempId] || 0
     const subtotal = itemTotal + unassignedShare
-    const personTax = (subtotal / taxableTotal) * totalTax
+    const ppn = Math.round((subtotal / taxableTotal) * (tax || 0))
+    const sc = Math.round((subtotal / taxableTotal) * (serviceCharge || 0))
+    const personTax = ppn + sc
     return {
       person: p,
       itemTotal,
       unassignedShare,
       tax: personTax,
+      ppn,
+      serviceCharge: sc,
       grandTotal: subtotal + personTax,
     }
   })
@@ -511,7 +515,7 @@ export default function SplitBillPage() {
                       <p className="mb-2 text-xs font-medium text-sky-700 dark:text-sky-400">Pengeluaran untuk {me?.name}:</p>
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span className="font-semibold">{merchant}</span>
-                        <span className="font-bold">{formatCurrency(Math.round(myTotal))}</span>
+                        <span className="font-bold">{formatCurrency(myTotal)}</span>
                       </div>
                       <select
                         value={expenseCategoryId}
@@ -550,9 +554,10 @@ export default function SplitBillPage() {
                     </div>
                   )}
                   <div className="space-y-0.5 text-xs text-zinc-500 dark:text-zinc-500">
-                    <p>Pesanan: {formatCurrency(Math.round(r.itemTotal))}</p>
-                    {r.unassignedShare > 0 && <p>Bagi rata: {formatCurrency(Math.round(r.unassignedShare))}</p>}
-                    {calc.totalItems > 0 && <p>Pajak+SC: {formatCurrency(Math.round(r.tax))}</p>}
+                    <p>Pesanan: {formatCurrency(r.itemTotal)}</p>
+                    {r.unassignedShare > 0 && <p>Bagi rata: {formatCurrency(r.unassignedShare)}</p>}
+                    {r.ppn > 0 && <p>PPN: {formatCurrency(r.ppn)}</p>}
+                    {r.serviceCharge > 0 && <p>Service: {formatCurrency(r.serviceCharge)}</p>}
                   </div>
                 </div>
                 )

@@ -145,8 +145,8 @@ export default function Dashboard() {
     if (preset === "thisMonth") {
       const y = now.getFullYear()
       const m = now.getMonth() + monthOffset
-      const s = new Date(y, m, 1)
-      const e = new Date(y, m + 1, 0)
+      const s = new Date(y, m - 1, 25)
+      const e = new Date(y, m, 24)
       params.set("start", toLocalDateStr(s))
       params.set("end", toLocalDateStr(e))
     } else if (preset === "lastMonth") {

@@ -10,6 +10,8 @@ type SplitBillItem = {
   merchant: string
   shareCode: string
   totalAmount: string
+  tax: string
+  serviceCharge: string
   createdAt: string
   _count: { items: number; persons: number }
 }
@@ -93,7 +95,7 @@ export default function SplitBillsPage() {
                     <Users className="size-3" />
                     {sb._count.persons}
                   </span>
-                  <span className="font-medium">{formatCurrency(Number(sb.totalAmount))}</span>
+                  <span className="font-medium">{formatCurrency(Number(sb.totalAmount) + Number(sb.tax) + Number(sb.serviceCharge))}</span>
                 </div>
               </div>
               <ChevronRight className="size-4 shrink-0 text-zinc-300 dark:text-zinc-600" />

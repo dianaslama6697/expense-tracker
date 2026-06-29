@@ -104,10 +104,16 @@ export default function SplitBillView() {
     for (const p of data.persons) {
       const it = assignedTotals[p.id] || 0
       const subtotal = it + unassignedShare
-      const personTax = (subtotal / taxableTotal) * totalTax
-      lines.push(
-        `${p.name}: ${formatCurrency(Math.round(subtotal + personTax))}`
-      )
+      const ppn = (subtotal / taxableTotal) * Number(data.tax)
+      const sc = (subtotal / taxableTotal) * Number(data.serviceCharge)
+      const personTax = ppn + sc
+      lines.push(`${p.name}: ${formatCurrency(subtotal + personTax)}`)
+      if (ppn > 0 || sc > 0) {
+        const details: string[] = []
+        if (ppn > 0) details.push(`PPN ${formatCurrency(ppn)}`)
+        if (sc > 0) details.push(`Service ${formatCurrency(sc)}`)
+        lines.push(`  (${details.join(", ")})`)
+      }
     }
     lines.push(`\nLihat detail: ${url}`)
     const msg = encodeURIComponent(lines.join("\n"))
@@ -164,7 +170,9 @@ export default function SplitBillView() {
           {data.persons.map((p) => {
             const it = assignedTotals[p.id] || 0
             const subtotal = it + unassignedShare
-            const personTax = (subtotal / taxableTotal) * totalTax
+            const ppn = (subtotal / taxableTotal) * Number(data.tax)
+            const sc = (subtotal / taxableTotal) * Number(data.serviceCharge)
+            const personTax = ppn + sc
             return (
               <div
                 key={p.id}
@@ -178,7 +186,7 @@ export default function SplitBillView() {
                     <span className="text-sm font-medium">{p.name}</span>
                   </div>
                   <span className="text-sm font-bold">
-                    {formatCurrency(Math.round(subtotal + personTax))}
+                    {formatCurrency(subtotal + personTax)}
                   </span>
                 </div>
                 {p.assignments.length > 0 && (
@@ -194,6 +202,12 @@ export default function SplitBillView() {
                     })}
                   </div>
                 )}
+                <div className="mt-1.5 space-y-0.5 pl-9 text-xs text-zinc-400 dark:text-zinc-500">
+                  <p>Pesanan: {formatCurrency(it)}</p>
+                  {unassignedShare > 0 && <p>Bagi rata: {formatCurrency(unassignedShare)}</p>}
+                  {ppn > 0 && <p>PPN: {formatCurrency(ppn)}</p>}
+                  {sc > 0 && <p>Service: {formatCurrency(sc)}</p>}
+                </div>
               </div>
             )
           })}
