@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     { rel: "apple-touch-icon", url: "/icons/icon-180.png" },
   ],
   other: {
-    "theme-color": "#ffffff",
+    "theme-color": "#000000",
   },
 }
 

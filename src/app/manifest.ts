@@ -7,23 +7,23 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Track your expenses with ease",
     start_url: "/",
     display: "standalone",
-    background_color: "#f1f4f7",
-    theme_color: "#ffffff",
+    background_color: "#000000",
+    theme_color: "#000000",
     orientation: "portrait-primary",
     categories: ["finance", "productivity"],
     icons: [
       {
-        src: "/icons/icon-192.png",
+        src: "/icons/icon-192.png?v=2",
         sizes: "192x192",
         type: "image/png",
       },
       {
-        src: "/icons/icon-512.png",
+        src: "/icons/icon-512.png?v=2",
         sizes: "512x512",
         type: "image/png",
       },
       {
-        src: "/icons/icon-512.png",
+        src: "/icons/icon-512.png?v=2",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
