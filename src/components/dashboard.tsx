@@ -29,7 +29,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
 } from "recharts"
 import { Drawer } from "vaul"
 
@@ -499,30 +498,52 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-center justify-center sm:block">
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
+                      <defs>
+                        {byCategory.map((cat) => (
+                          <linearGradient key={cat.categoryId} id={`pieGrad-${cat.categoryId}`} x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor={cat.color || "#6b7280"} stopOpacity={1} />
+                            <stop offset="100%" stopColor={cat.color || "#6b7280"} stopOpacity={0.6} />
+                          </linearGradient>
+                        ))}
+                      </defs>
                       <Pie
                         data={byCategory.map((c) => ({
                           name: c.name,
                           value: c.total,
                           color: c.color || "#6b7280",
+                          catId: c.categoryId,
                         }))}
                         cx="50%"
                         cy="50%"
-                        innerRadius={55}
-                        outerRadius={85}
-                        paddingAngle={2}
+                        innerRadius={60}
+                        outerRadius={95}
+                        paddingAngle={3}
                         dataKey="value"
+                        animationBegin={0}
+                        animationDuration={800}
+                        strokeWidth={2}
+                        stroke="hsl(var(--card))"
                       >
                         {byCategory.map((cat) => (
                           <Cell
                             key={cat.categoryId}
-                            fill={cat.color || "#6b7280"}
+                            fill={`url(#pieGrad-${cat.categoryId})`}
                           />
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) => formatCurrency(Number(value))}
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.[0]) return null
+                          const d = payload[0].payload
+                          return (
+                            <div className="rounded-xl bg-card px-3 py-2 text-xs shadow-lg">
+                              <p className="font-medium">{d.name}</p>
+                              <p className="text-muted-foreground">{formatCurrency(d.value)}</p>
+                            </div>
+                          )
+                        }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -533,7 +554,7 @@ export default function Dashboard() {
                       <div className="mb-0.5 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1.5">
                           <div
-                            className="size-2 rounded-full"
+                            className="size-2.5 rounded-full"
                             style={{
                               backgroundColor: cat.color || "#6b7280",
                             }}
@@ -544,7 +565,7 @@ export default function Dashboard() {
                           {formatCurrency(cat.total)}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -574,19 +595,25 @@ export default function Dashboard() {
                 Belum ada data
               </p>
             ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={dailyTotals}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={dailyTotals} barCategoryGap="20%">
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    </linearGradient>
+                  </defs>
                   <XAxis
                     dataKey="day"
-                    tick={{ fontSize: 11, fill: "hsl(var(--chart-text))" }}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "hsl(var(--chart-text))" }}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                     tickLine={false}
                     axisLine={false}
+                    width={40}
                     tickFormatter={(v: number) =>
                       v >= 1000000
                         ? `${(v / 1000000).toFixed(1)}jt`
@@ -596,14 +623,23 @@ export default function Dashboard() {
                     }
                   />
                   <Tooltip
-                    formatter={(value) => formatCurrency(Number(value))}
-                    labelFormatter={(label) => `Tanggal ${label}`}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.[0]) return null
+                      return (
+                        <div className="rounded-xl bg-card px-3 py-2 text-xs shadow-lg">
+                          <p className="mb-0.5 text-muted-foreground">{label}</p>
+                          <p className="font-medium">{formatCurrency(Number(payload[0].value))}</p>
+                        </div>
+                      )
+                    }}
                   />
                   <Bar
                     dataKey="total"
-                    fill="hsl(var(--chart-bar))"
-                    radius={[3, 3, 0, 0]}
-                    maxBarSize={24}
+                    fill="url(#barGradient)"
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={32}
+                    animationBegin={0}
+                    animationDuration={600}
                   />
                 </BarChart>
               </ResponsiveContainer>
