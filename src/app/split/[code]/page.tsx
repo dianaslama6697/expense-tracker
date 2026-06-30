@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Loader2, Share2, Check } from "lucide-react"
+import { FadeIn } from "@/components/motion_wrappers"
 import { toast } from "sonner"
 
 function formatCurrency(n: number) {
@@ -61,7 +62,7 @@ export default function SplitBillView() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -69,7 +70,7 @@ export default function SplitBillView() {
   if (!data) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 p-4">
-        <p className="text-sm text-zinc-500 dark:text-zinc-500">Split bill tidak ditemukan</p>
+        <p className="text-sm text-muted-foreground">Split bill tidak ditemukan</p>
       </div>
     )
   }
@@ -122,12 +123,13 @@ export default function SplitBillView() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-5">
+      <FadeIn>
+      <div className="rounded-3xl bg-card p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold">Split Bill</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-500">{data.merchant}</p>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="text-sm text-muted-foreground">{data.merchant}</p>
+            <p className="text-xs text-muted-foreground">
               Dibuat oleh {data.user.name || "Unknown"}
             </p>
           </div>
@@ -141,12 +143,12 @@ export default function SplitBillView() {
 
         <div className="mb-4 space-y-1 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-zinc-500 dark:text-zinc-500">Total Item</span>
+            <span className="text-muted-foreground">Total Item</span>
             <span className="font-medium">{formatCurrency(totalItems)}</span>
           </div>
           {Number(data.tax) > 0 && (
             <div className="flex justify-between">
-              <span className="text-zinc-500 dark:text-zinc-500">Pajak</span>
+              <span className="text-muted-foreground">Pajak</span>
               <span className="font-medium">
                 {formatCurrency(Number(data.tax))}
               </span>
@@ -154,7 +156,7 @@ export default function SplitBillView() {
           )}
           {Number(data.serviceCharge) > 0 && (
             <div className="flex justify-between">
-              <span className="text-zinc-500 dark:text-zinc-500">Service Charge</span>
+              <span className="text-muted-foreground">Service Charge</span>
               <span className="font-medium">
                 {formatCurrency(Number(data.serviceCharge))}
               </span>
@@ -190,7 +192,7 @@ export default function SplitBillView() {
                   </span>
                 </div>
                 {p.assignments.length > 0 && (
-                  <div className="space-y-0.5 pl-9 text-xs text-zinc-500 dark:text-zinc-500">
+                  <div className="space-y-0.5 pl-9 text-xs text-muted-foreground">
                     {p.assignments.map((a, i) => {
                       const qty = a.quantity > 0 ? a.quantity : a.item.quantity
                       return (
@@ -202,7 +204,7 @@ export default function SplitBillView() {
                     })}
                   </div>
                 )}
-                <div className="mt-1.5 space-y-0.5 pl-9 text-xs text-zinc-400 dark:text-zinc-500">
+                <div className="mt-1.5 space-y-0.5 pl-9 text-xs text-muted-foreground">
                   <p>Pesanan: {formatCurrency(it)}</p>
                   {unassignedShare > 0 && <p>Bagi rata: {formatCurrency(unassignedShare)}</p>}
                   {ppn > 0 && <p>PPN: {formatCurrency(ppn)}</p>}
@@ -214,12 +216,13 @@ export default function SplitBillView() {
         </div>
 
         {unassignedTotal > 0 && (
-          <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             *{formatCurrency(unassignedTotal)} item yang tidak di-assign dibagi
             rata ({formatCurrency(Math.round(unassignedShare))}/orang)
           </p>
         )}
       </div>
+      </FadeIn>
     </div>
   )
 }

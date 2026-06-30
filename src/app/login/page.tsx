@@ -54,8 +54,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-sm">
-        <h1 className="mb-1 text-center text-2xl font-bold">Expense Tracker</h1>
+      <div className="w-full max-w-sm rounded-3xl bg-card p-6">
+        <h1 className="mb-1 text-center text-2xl font-bold text-foreground">Expense Tracker</h1>
         <p className="mb-6 text-center text-sm text-muted-foreground">
           {registering
             ? "Buat akun baru"
@@ -69,7 +69,7 @@ export default function LoginPage() {
               placeholder="Nama"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+              className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
           )}
           <input
@@ -78,7 +78,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
           <div className="relative">
             <input
@@ -88,7 +88,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full rounded-xl border px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+              className="w-full rounded-xl border border-input px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
             <button
               type="button"
@@ -100,7 +100,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <p className="text-xs text-red-500">{error}</p>
+            <p className="text-xs text-destructive">{error}</p>
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>

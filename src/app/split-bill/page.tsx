@@ -325,10 +325,10 @@ export default function SplitBillPage() {
             const isDone = step > s.num
             return (
               <div key={s.num} className="flex items-center gap-1">
-                <div className={`flex size-7 items-center justify-center rounded-full text-xs font-medium ${isActive ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900" : isDone ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-zinc-100 text-zinc-400 dark:text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500"}`}>
+                <div className={`flex size-7 items-center justify-center rounded-full text-xs font-medium ${isActive ? "bg-foreground text-background" : isDone ? "bg-primary/20 text-foreground" : "bg-secondary text-muted-foreground"}`}>
                   {isDone ? <Check className="size-3.5" /> : s.num}
                 </div>
-                <span className={`text-[11px] ${isActive ? "font-medium text-gray-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500 dark:text-zinc-500"}`}>{s.label}</span>
+                <span className={`text-[11px] ${isActive ? "font-medium text-foreground" : "text-muted-foreground"}`}>{s.label}</span>
                 {s.num < 4 && <ChevronRight className="size-3 text-zinc-300 dark:text-zinc-600" />}
               </div>
             )
@@ -339,18 +339,18 @@ export default function SplitBillPage() {
       {scanning && (
         <div className="flex flex-col items-center py-10">
           <Sparkles className="mb-3 size-8 animate-pulse text-amber-500" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-500">Memproses struk...</p>
+          <p className="text-sm text-muted-foreground">Memproses struk...</p>
         </div>
       )}
 
       {savedCode ? (
-        <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-6 text-center">
+        <div className="rounded-3xl bg-card p-6 text-center shadow-sm">
           <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-emerald-100">
             <Check className="size-6 text-emerald-600" />
           </div>
           <p className="mb-1 font-medium">Split bill siap dibagikan!</p>
-          <p className="mb-4 text-xs text-zinc-400 dark:text-zinc-500">{merchant}</p>
-          <div className="mb-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 text-xs text-zinc-500 dark:text-zinc-500 break-all">
+          <p className="mb-4 text-xs text-muted-foreground">{merchant}</p>
+          <div className="mb-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 text-xs text-muted-foreground break-all">
             {window.location.origin}/split/{savedCode}
           </div>
           <div className="flex gap-2">
@@ -362,12 +362,12 @@ export default function SplitBillPage() {
               Salin Link
             </Button>
           </div>
-          <Button variant="ghost" onClick={resetAll} className="mt-3 w-full text-sm text-zinc-400 dark:text-zinc-500">
+          <Button variant="ghost" onClick={resetAll} className="mt-3 w-full text-sm text-muted-foreground">
             Buat Split Bill Baru
           </Button>
         </div>
       ) : (
-        <div className="space-y-4 rounded-2xl border bg-white dark:bg-zinc-900 p-4">
+        <div className="space-y-4 rounded-3xl bg-card p-4 shadow-sm">
           {/* Scan button */}
           {step === 1 && (
             <div className="flex gap-2">
@@ -386,40 +386,40 @@ export default function SplitBillPage() {
           {step === 1 && (
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">Merchant</label>
-                <input type="text" value={merchant} onChange={(e) => setMerchant(e.target.value)} className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Nama tempat..." />
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Merchant</label>
+                <input type="text" value={merchant} onChange={(e) => setMerchant(e.target.value)} className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Nama tempat..." />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">Tanggal</label>
-                <input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100" />
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Tanggal</label>
+                <input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">Pajak (Rp)</label>
-                  <input type="number" value={tax || ""} onChange={(e) => setTax(Number(e.target.value) || 0)} className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="0" min="0" />
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Pajak (Rp)</label>
+                  <input type="number" value={tax || ""} onChange={(e) => setTax(Number(e.target.value) || 0)} className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="0" min="0" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">Service Charge (Rp)</label>
-                  <input type="number" value={serviceCharge || ""} onChange={(e) => setServiceCharge(Number(e.target.value) || 0)} className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="0" min="0" />
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Service Charge (Rp)</label>
+                  <input type="number" value={serviceCharge || ""} onChange={(e) => setServiceCharge(Number(e.target.value) || 0)} className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="0" min="0" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">Item Pesanan</label>
+                <label className="block text-xs font-medium text-muted-foreground">Item Pesanan</label>
                 {items.map((item) => (
                   <div key={item.tempId} className="flex items-center gap-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{item.name}</p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500">{formatCurrency(item.price)}{item.quantity > 1 && ` × ${item.quantity}`}</p>
+                      <p className="text-xs text-muted-foreground">{formatCurrency(item.price)}{item.quantity > 1 && ` × ${item.quantity}`}</p>
                     </div>
                     <span className="shrink-0 text-sm font-medium">{formatCurrency(item.price * item.quantity)}</span>
-                    <button onClick={() => removeItem(item.tempId)} className="shrink-0 rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-200 hover:text-red-500"><X className="size-3.5" /></button>
+                    <button onClick={() => removeItem(item.tempId)} className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive"><X className="size-3.5" /></button>
                   </div>
                 ))}
               </div>
               <div className="grid grid-cols-[1fr_80px_60px] gap-2">
-                <input type="text" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full min-w-0 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Nama item" />
-                <input type="number" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full min-w-0 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Harga" min="0" />
-                <input type="number" value={newItemQty} onChange={(e) => setNewItemQty(e.target.value || "1")} className="w-full min-w-0 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Qty" min="1" />
+                <input type="text" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full min-w-0 rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Nama item" />
+                <input type="number" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full min-w-0 rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Harga" min="0" />
+                <input type="number" value={newItemQty} onChange={(e) => setNewItemQty(e.target.value || "1")} className="w-full min-w-0 rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Qty" min="1" />
               </div>
               <Button variant="outline" onClick={addItem} disabled={!newItemName || !newItemPrice} className="w-full"><Plus className="mr-1.5 size-4" />Tambah Item</Button>
             </div>
@@ -428,26 +428,26 @@ export default function SplitBillPage() {
           {/* Step 2: People */}
           {step === 2 && (
             <div className="space-y-3">
-              <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">Yang ikut makan</label>
+              <label className="block text-xs font-medium text-muted-foreground">Yang ikut makan</label>
               {persons.map((p) => (
                 <div key={p.tempId} className="flex items-center gap-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2">
                   <div className="flex size-7 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white">{p.name.charAt(0).toUpperCase()}</div>
                   <span className="flex-1 text-sm">{p.name}</span>
                   <button
                     onClick={() => setMyPersonId(myPersonId === p.tempId ? "" : p.tempId)}
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+                    className={`rounded-xl border px-3 py-2 text-sm transition-colors ${
                       myPersonId === p.tempId
-                        ? "bg-sky-600 text-white"
-                        : "border text-zinc-400 hover:border-sky-300 hover:text-sky-600 dark:text-zinc-500"
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border text-muted-foreground"
                     }`}
                   >
                     {myPersonId === p.tempId ? <><UserCheck className="mr-0.5 inline size-3" />Saya</> : "Ini Saya"}
                   </button>
-                  <button onClick={() => removePerson(p.tempId)} className="rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-200 hover:text-red-500"><X className="size-3.5" /></button>
+                  <button onClick={() => removePerson(p.tempId)} className="rounded p-1 text-muted-foreground hover:text-destructive"><X className="size-3.5" /></button>
                 </div>
               ))}
               <div className="flex gap-2">
-                <input type="text" value={personName} onChange={(e) => setPersonName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addPerson()} className="flex-1 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Nama teman..." />
+                <input type="text" value={personName} onChange={(e) => setPersonName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addPerson()} className="flex-1 rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500" placeholder="Nama teman..." />
                 <Button variant="outline" onClick={addPerson} disabled={!personName.trim()}><Plus className="mr-1.5 size-4" />Tambah</Button>
               </div>
             </div>
@@ -456,18 +456,18 @@ export default function SplitBillPage() {
           {/* Step 3: Assign */}
           {step === 3 && (
             <div className="space-y-4">
-              <p className="text-xs text-zinc-500 dark:text-zinc-500">Klik item untuk menambah ke orang ini (klik lagi nambah, sampai max/reset). Jumlah total antar orang tidak akan melebihi stok item.</p>
+              <p className="text-xs text-muted-foreground">Klik item untuk menambah ke orang ini (klik lagi nambah, sampai max/reset). Jumlah total antar orang tidak akan melebihi stok item.</p>
               {persons.length === 0 ? (
-                <p className="py-4 text-center text-sm text-zinc-400 dark:text-zinc-500">Tambah orang dulu di langkah sebelumnya</p>
+                <p className="py-4 text-center text-sm text-muted-foreground">Tambah orang dulu di langkah sebelumnya</p>
               ) : (
                 persons.map((p) => {
                   const personTotal = items.reduce((s, i) => s + i.price * (p.itemQtys[i.tempId] || 0), 0)
                   return (
-                    <div key={p.tempId} className="rounded-xl border bg-white dark:bg-zinc-900 p-3">
+                    <div key={p.tempId} className="rounded-xl bg-card p-3 shadow-sm">
                       <div className="mb-2 flex items-center gap-2">
                         <div className="flex size-6 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white">{p.name.charAt(0).toUpperCase()}</div>
                         <span className="text-sm font-medium">{p.name}</span>
-                        <span className="ml-auto text-xs text-zinc-400 dark:text-zinc-500">{formatCurrency(personTotal)}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">{formatCurrency(personTotal)}</span>
                       </div>
                       <div className="space-y-1">
                         {items.map((item) => {
@@ -479,7 +479,7 @@ export default function SplitBillPage() {
                               className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${qty > 0 ? "bg-sky-50 dark:bg-sky-950/50" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/70"}`}
                             >
                               <span className="flex-1 text-sm dark:text-zinc-100">{item.name}</span>
-                              <span className="text-xs text-zinc-500 dark:text-zinc-400">{item.quantity > 1 ? `${item.quantity} × ${formatCurrency(item.price)}` : formatCurrency(item.price)}</span>
+                              <span className="text-xs text-muted-foreground">{item.quantity > 1 ? `${item.quantity} × ${formatCurrency(item.price)}` : formatCurrency(item.price)}</span>
                               {qty > 0 ? (
                                 <span className="flex size-6 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white dark:bg-white dark:text-gray-900">{qty}</span>
                               ) : (
@@ -499,10 +499,10 @@ export default function SplitBillPage() {
           {/* Step 4: Summary */}
           {step === 4 && (
             <div className="space-y-4">
-              <div className="rounded-xl border bg-white dark:bg-zinc-900 p-3">
-                <div className="flex items-center justify-between text-sm"><span className="text-zinc-500 dark:text-zinc-500">Total Item</span><span className="font-medium">{formatCurrency(calc.totalItems)}</span></div>
-                {tax > 0 && <div className="flex items-center justify-between text-sm"><span className="text-zinc-500 dark:text-zinc-500">Pajak</span><span className="font-medium">{formatCurrency(tax)}</span></div>}
-                {serviceCharge > 0 && <div className="flex items-center justify-between text-sm"><span className="text-zinc-500 dark:text-zinc-500">Service Charge</span><span className="font-medium">{formatCurrency(serviceCharge)}</span></div>}
+              <div className="rounded-xl bg-card p-3 shadow-sm">
+                <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Total Item</span><span className="font-medium">{formatCurrency(calc.totalItems)}</span></div>
+                {tax > 0 && <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Pajak</span><span className="font-medium">{formatCurrency(tax)}</span></div>}
+                {serviceCharge > 0 && <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Service Charge</span><span className="font-medium">{formatCurrency(serviceCharge)}</span></div>}
                 <div className="mt-1 flex items-center justify-between border-t pt-1 text-sm font-bold"><span>Total</span><span>{formatCurrency(calc.grandTotal)}</span></div>
               </div>
 
@@ -511,8 +511,8 @@ export default function SplitBillPage() {
                 const myTotal = me ? items.reduce((s, i) => s + i.price * (me.itemQtys[i.tempId] || 0), 0) : 0
                 if (myTotal > 0) {
                   return (
-                    <div className="rounded-xl border border-sky-200 bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/30 p-3">
-                      <p className="mb-2 text-xs font-medium text-sky-700 dark:text-sky-400">Pengeluaran untuk {me?.name}:</p>
+                    <div className="rounded-xl border border-sky-200 bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/30 p-3 shadow-sm">
+                      <p className="mb-2 text-xs font-medium text-foreground">Pengeluaran untuk {me?.name}:</p>
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span className="font-semibold">{merchant}</span>
                         <span className="font-bold">{formatCurrency(myTotal)}</span>
@@ -537,7 +537,7 @@ export default function SplitBillPage() {
                   .filter((i) => (r.person.itemQtys[i.tempId] || 0) > 0)
                   .map((i) => ({ ...i, qty: r.person.itemQtys[i.tempId] }))
                 return (
-                <div key={r.person.tempId} className="rounded-xl border bg-white dark:bg-zinc-900 p-3">
+                <div key={r.person.tempId} className="rounded-xl bg-card p-3 shadow-sm">
                   <div className="mb-1.5 flex items-center gap-2">
                     <div className="flex size-6 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white">{r.person.name.charAt(0).toUpperCase()}</div>
                     <span className="text-sm font-medium">{r.person.name}</span>
@@ -548,12 +548,12 @@ export default function SplitBillPage() {
                       {personItems.map((item) => (
                         <div key={item.tempId} className="flex items-center justify-between text-xs">
                           <span className="text-zinc-600">{item.name}{item.qty > 1 && ` ×${item.qty}`}</span>
-                          <span className="text-zinc-500 dark:text-zinc-500">{formatCurrency(item.price * item.qty)}</span>
+                          <span className="text-muted-foreground">{formatCurrency(item.price * item.qty)}</span>
                         </div>
                       ))}
                     </div>
                   )}
-                  <div className="space-y-0.5 text-xs text-zinc-500 dark:text-zinc-500">
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
                     <p>Pesanan: {formatCurrency(r.itemTotal)}</p>
                     {r.unassignedShare > 0 && <p>Bagi rata: {formatCurrency(r.unassignedShare)}</p>}
                     {r.ppn > 0 && <p>PPN: {formatCurrency(r.ppn)}</p>}

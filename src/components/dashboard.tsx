@@ -143,10 +143,12 @@ export default function Dashboard() {
     const params = new URLSearchParams()
 
     if (preset === "thisMonth") {
-      const y = now.getFullYear()
-      const m = now.getMonth() + monthOffset
-      const s = new Date(y, m - 1, 25)
-      const e = new Date(y, m + 1, 0, 23, 59, 59, 999)
+      const d = now.getDate()
+      const base = new Date(now.getFullYear(), now.getMonth(), 25)
+      if (d < 25) base.setMonth(base.getMonth() - 1)
+      base.setMonth(base.getMonth() + monthOffset)
+      const s = new Date(base.getFullYear(), base.getMonth(), 25)
+      const e = new Date(base.getFullYear(), base.getMonth() + 1, 24)
       params.set("start", toLocalDateStr(s))
       params.set("end", toLocalDateStr(e))
     } else if (preset === "lastMonth") {
@@ -245,9 +247,9 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center py-20">
         {loading ? (
-          <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
         ) : (
-          <p className="text-sm text-zinc-400 dark:text-zinc-500">Gagal memuat dashboard</p>
+          <p className="text-sm text-muted-foreground">Gagal memuat dashboard</p>
         )}
       </div>
     )
@@ -273,7 +275,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Filter bar */}
-      <div className="space-y-3 rounded-2xl border bg-white dark:bg-zinc-900 p-4 sm:p-5">
+      <div className="space-y-3 rounded-3xl bg-card p-4 shadow-sm sm:p-5">
         <div className="flex flex-wrap gap-1.5">
           {(["thisMonth", "lastMonth", "last3Months", "thisYear"] as Preset[]).map(
             (p) => (
@@ -282,8 +284,8 @@ export default function Dashboard() {
                 onClick={() => handlePresetChange(p)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs ${
                   preset === p
-                    ? "bg-blue-600 text-white"
-                    : "bg-sky-100 text-sky-700 hover:bg-sky-200"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:brightness-95"
                 }`}
               >
                 {p === "thisMonth"
@@ -300,8 +302,8 @@ export default function Dashboard() {
             onClick={() => handlePresetChange("custom")}
             className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs ${
               preset === "custom"
-                ? "bg-blue-600 text-white"
-                : "bg-sky-100 text-sky-700 hover:bg-sky-200"
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground hover:brightness-95"
             }`}
           >
             Kustom
@@ -314,13 +316,13 @@ export default function Dashboard() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigateMonth(-1)}
-                className="rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                className="rounded p-1 text-muted-foreground hover:bg-secondary"
               >
                 <ChevronLeft className="size-4" />
               </button>
               <button
                 onClick={() => navigateMonth(1)}
-                className="rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                className="rounded p-1 text-muted-foreground hover:bg-secondary"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -339,14 +341,14 @@ export default function Dashboard() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="min-w-0 flex-1 rounded-xl border px-3 py-1.5 text-xs sm:min-w-0 sm:flex-none"
+                className="min-w-0 flex-1 rounded-xl border border-input px-3 py-1.5 text-xs sm:min-w-0 sm:flex-none"
               />
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+              <span className="text-xs text-muted-foreground">—</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="min-w-0 flex-1 rounded-xl border px-3 py-1.5 text-xs sm:min-w-0 sm:flex-none"
+                className="min-w-0 flex-1 rounded-xl border border-input px-3 py-1.5 text-xs sm:min-w-0 sm:flex-none"
               />
             </div>
           )}
@@ -356,7 +358,7 @@ export default function Dashboard() {
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="rounded-xl border px-3 py-1.5 text-xs dark:bg-zinc-800 dark:text-zinc-100"
+              className="rounded-xl border border-input px-3 py-1.5 text-xs dark:bg-zinc-800 dark:text-zinc-100"
             >
               <option value="">Semua kategori</option>
               {categories.map((cat) => (
@@ -393,7 +395,7 @@ export default function Dashboard() {
               info: {
                 borderBg: "border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/30",
                 text: "text-blue-800 dark:text-blue-300",
-                icon: "text-blue-600 dark:text-blue-400",
+                icon: "text-foreground",
               },
             }
             return (
@@ -401,7 +403,7 @@ export default function Dashboard() {
                 key={i}
                 className={`flex items-start gap-2 rounded-lg border p-3 ${insightTypeStyle[insight.type]?.borderBg || "border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/30"}`}
               >
-                <Icon className={`mt-0.5 size-4 shrink-0 ${insightTypeStyle[insight.type]?.icon || "text-blue-600 dark:text-blue-400"}`} />
+                <Icon className={`mt-0.5 size-4 shrink-0 ${insightTypeStyle[insight.type]?.icon || "text-foreground"}`} />
                 <p className={`text-sm ${insightTypeStyle[insight.type]?.text || "text-blue-800 dark:text-blue-300"}`}>{insight.message}</p>
               </div>
             )
@@ -411,38 +413,42 @@ export default function Dashboard() {
 
       {loading ? (
         <div className="flex items-center justify-center py-10">
-          <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
         <>
           {/* Kartu ringkasan */}
-          <FadeIn>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
-              <p className="text-xs text-sky-600">Total</p>
+            <FadeIn delay={0}>
+            <div className="flex h-full flex-col rounded-3xl bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-lg font-bold">
                 {formatCurrency(currentPeriod.total)}
               </p>
-              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {currentPeriod.count} transaksi
               </p>
             </div>
-            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
-              <p className="text-xs text-sky-600">Rata-rata / hari</p>
+            </FadeIn>
+            <FadeIn delay={0.05}>
+            <div className="flex h-full flex-col rounded-3xl bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <p className="text-xs text-muted-foreground">Rata-rata / hari</p>
               <p className="text-lg font-bold">
                 {formatCurrency(Math.round(currentPeriod.averagePerDay))}
               </p>
             </div>
-            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
-              <p className="text-xs text-sky-600">Periode sebelumnya</p>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+            <div className="flex h-full flex-col rounded-3xl bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <p className="text-xs text-muted-foreground">Periode sebelumnya</p>
               <p className="text-lg font-bold">
                 {formatCurrency(previousPeriod.total)}
               </p>
               <div className="mt-1 flex items-center gap-1 text-xs">
                 {data.changePercent > 0 ? (
                   <>
-                    <TrendingUp className="size-3 text-red-500" />
-                    <span className="text-red-500">
+                    <TrendingUp className="size-3 text-destructive" />
+                    <span className="text-destructive">
                       +{data.changePercent.toFixed(1)}%
                     </span>
                   </>
@@ -454,30 +460,32 @@ export default function Dashboard() {
                     </span>
                   </>
                 ) : (
-                  <span className="text-zinc-400 dark:text-zinc-500">0%</span>
+                  <span className="text-muted-foreground">0%</span>
                 )}
               </div>
             </div>
-            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
-              <p className="text-xs text-sky-600">Hari terlewat</p>
+            </FadeIn>
+            <FadeIn delay={0.15}>
+            <div className="flex h-full flex-col rounded-3xl bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <p className="text-xs text-muted-foreground">Hari terlewat</p>
               <p className="text-lg font-bold">
                 {currentPeriod.daysSoFar}/{data.period.days}
               </p>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                 <div
-                  className="h-full rounded-full bg-blue-600 transition-all"
+                  className="h-full rounded-full bg-primary transition-all"
                   style={{
                     width: `${(currentPeriod.daysSoFar / data.period.days) * 100}%`,
                   }}
                 />
               </div>
             </div>
+            </FadeIn>
           </div>
-          </FadeIn>
 
           {/* Grafik per kategori */}
           <FadeIn delay={0.1}>
-          <div className="rounded-lg border bg-white dark:bg-zinc-900 p-4">
+          <div className="rounded-3xl bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <PieChartIcon className="size-4" />
               <h3 className="text-sm font-medium">
@@ -485,7 +493,7 @@ export default function Dashboard() {
               </h3>
             </div>
             {byCategory.length === 0 ? (
-              <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-500">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 Belum ada data
               </p>
             ) : (
@@ -555,14 +563,14 @@ export default function Dashboard() {
 
           {/* Grafik tren harian */}
           <FadeIn delay={0.2}>
-          <div className="rounded-lg border bg-white dark:bg-zinc-900 p-4">
+          <div className="rounded-3xl bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <BarChartIcon className="size-4" />
               <h3 className="text-sm font-medium">Tren Harian</h3>
             </div>
             {dailyTotals.length === 0 ||
             dailyTotals.every((d) => d.total === 0) ? (
-              <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-500">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 Belum ada data
               </p>
             ) : (
@@ -605,11 +613,11 @@ export default function Dashboard() {
 
           {/* Pocket tracking */}
           {budgets.length > 0 && (
-            <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4">
+            <div className="rounded-3xl bg-card p-4 shadow-sm">
               <div className="mb-3 flex items-center gap-2">
                 <Wallet className="size-4" />
                 <h3 className="text-sm font-medium">Kantong</h3>
-                <span className="ml-auto text-xs text-zinc-400 dark:text-zinc-500">
+                <span className="ml-auto text-xs text-muted-foreground">
                   Total {formatCurrency(budgets.reduce((s, b) => s + b.remaining, 0))}
                 </span>
               </div>
@@ -625,7 +633,7 @@ export default function Dashboard() {
                         setEditingPocket(b)
                         setPocketAmount(String(b.budgetAmount || ""))
                       }}
-                      className="w-full rounded-xl border border-transparent bg-zinc-50 p-3 text-left transition-colors hover:border-zinc-200 active:bg-zinc-100 dark:bg-zinc-800 dark:hover:border-zinc-700 dark:active:bg-zinc-700"
+                      className="w-full rounded-xl bg-secondary/50 p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-secondary hover:shadow-sm active:bg-muted active:translate-y-0"
                     >
                       <div className="mb-1.5 flex items-center justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2">
@@ -640,7 +648,7 @@ export default function Dashboard() {
                             <span className={`text-lg font-bold ${isOver ? "text-red-600 dark:text-red-400" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                               {formatCurrency(b.remaining)}
                             </span>
-                            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                            <span className="text-xs text-muted-foreground">
                               dari {formatCurrency(b.budgetAmount)}
                             </span>
                           </div>
@@ -657,7 +665,7 @@ export default function Dashboard() {
                               {b.categories.map((c) => (
                                 <span
                                   key={c.id}
-                                  className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 dark:text-zinc-400"
+                                  className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
                                 >
                                   {c.name}
                                 </span>
@@ -666,7 +674,7 @@ export default function Dashboard() {
                           )}
                         </>
                       ) : (
-                        <p className="text-sm text-zinc-400 dark:text-zinc-500">Ketuk untuk atur pocket</p>
+                        <p className="text-sm text-muted-foreground">Ketuk untuk atur pocket</p>
                       )}
                     </button>
                   )
@@ -682,18 +690,18 @@ export default function Dashboard() {
           >
             <Drawer.Portal>
               <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-              <Drawer.Content className="fixed bottom-0 left-0 right-0 rounded-t-2xl bg-white dark:bg-zinc-900 px-4 pb-8 pt-4 outline-none">
+              <Drawer.Content className="fixed bottom-0 left-0 right-0 rounded-t-3xl bg-card px-4 pb-8 pt-4 outline-none">
                 <Drawer.Handle />
                 <div className="mx-auto max-w-sm">
                   <h3 className="mb-1 text-center text-sm font-medium">Atur Kantong</h3>
                   {editingPocket && (
-                    <p className="mb-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
+                    <p className="mb-4 text-center text-xs text-muted-foreground">
                       {editingPocket.name}
                     </p>
                   )}
 
                   <div className="relative mb-4">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400 dark:text-zinc-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                       Rp
                     </span>
                     <input
@@ -715,7 +723,7 @@ export default function Dashboard() {
                         key={preset}
                         type="button"
                         onClick={() => setPocketAmount(String(preset))}
-                        className="flex-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200"
+                        className="flex-1 rounded-xl bg-secondary py-2 text-xs font-medium text-secondary-foreground transition-colors hover:brightness-95"
                       >
                         {formatCurrency(preset)}
                       </button>
@@ -726,7 +734,7 @@ export default function Dashboard() {
                     type="button"
                     disabled={savingPocket || !pocketAmount}
                     onClick={handleSavePocket}
-                    className="w-full rounded-xl bg-gray-900 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-zinc-200"
+                    className="w-full rounded-3xl bg-primary py-3 text-sm font-medium text-primary-foreground transition-colors hover:brightness-105 disabled:opacity-50"
                   >
                     {savingPocket ? "Menyimpan..." : "Simpan"}
                   </button>
@@ -736,10 +744,10 @@ export default function Dashboard() {
           </Drawer.Root>
 
           {/* Pengeluaran terbaru */}
-          <div className="rounded-lg border bg-white dark:bg-zinc-900 p-4">
+          <div className="rounded-3xl bg-card p-4 shadow-sm">
             <h3 className="mb-3 text-sm font-medium">Pengeluaran Terbaru</h3>
             {data.recentExpenses.length === 0 ? (
-              <p className="py-3 text-center text-sm text-zinc-400 dark:text-zinc-500">
+              <p className="py-3 text-center text-sm text-muted-foreground">
                 Belum ada pengeluaran
               </p>
             ) : (
@@ -766,7 +774,7 @@ export default function Dashboard() {
                       <p className="text-sm font-medium">
                         {formatCurrency(Number(exp.amount))}
                       </p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                      <p className="text-xs text-muted-foreground">
                         {format(
                           new Date(exp.expenseDate),
                           "d MMM",

@@ -201,7 +201,7 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
       {/* Picker popup */}
       {showPicker && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setShowPicker(false)}>
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-4 dark:bg-zinc-900 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-t-2xl bg-card p-4 sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 text-center text-sm font-medium">
               Ambil dari mana?
             </p>
@@ -210,20 +210,20 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
                 onClick={() => cameraInputRef.current?.click()}
               className="flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors hover:bg-sky-50 dark:hover:bg-sky-950/40"
             >
-              <Camera className="size-5 text-sky-600 dark:text-sky-400" />
+              <Camera className="size-5 text-foreground" />
                 <span>Ambil Foto</span>
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
               className="flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors hover:bg-sky-50 dark:hover:bg-sky-950/40"
             >
-              <ImageIcon className="size-5 text-sky-600 dark:text-sky-400" />
+              <ImageIcon className="size-5 text-foreground" />
                 <span>Pilih dari Gallery</span>
               </button>
             </div>
             <button
               onClick={() => setShowPicker(false)}
-              className="mt-3 w-full py-2 text-sm text-zinc-500 dark:text-zinc-400"
+              className="mt-3 w-full py-2 text-sm text-muted-foreground"
             >
               Batal
             </button>
@@ -257,21 +257,21 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50 bg-black/40" onClick={() => { if (step !== "uploading" && step !== "processing") reset() }} />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-4xl rounded-t-[16px] bg-white px-4 pb-8 pt-3 focus:outline-none dark:bg-zinc-900">
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-4xl flex-col rounded-t-3xl bg-card pb-8 pt-3 focus:outline-none h-[100dvh]">
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted" />
 
             {/* Loading states */}
             {step === "uploading" && (
               <div className="flex flex-col items-center py-10">
-                <Loader2 className="mb-3 size-8 animate-spin text-sky-600 dark:text-sky-400" />
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">Mengupload gambar...</p>
+                <Loader2 className="mb-3 size-8 animate-spin text-foreground" />
+                <p className="text-sm text-muted-foreground">Mengupload gambar...</p>
               </div>
             )}
 
             {step === "processing" && (
               <div className="flex flex-col items-center py-10">
                 <Sparkles className="mb-3 size-8 animate-pulse text-amber-500" />
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-muted-foreground">
                   Membaca struk dengan AI...
                 </p>
               </div>
@@ -290,7 +290,7 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
                   )}
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium">Hasil Scan</h3>
-                    <p className="text-xs text-zinc-400 dark:text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-muted-foreground">
                       Periksa kembali data sebelum menyimpan
                     </p>
                   </div>
@@ -298,7 +298,7 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
 
                 <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
                       Merchant
                     </label>
                     <MerchantInput
@@ -311,7 +311,7 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
 
                   {ocrItems.length > 0 && (
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                         Item Pesanan
                       </label>
                       <div className="space-y-2">
@@ -323,7 +323,7 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
                             >
                               <span className="text-sm font-medium">{item.name}</span>
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                                <span className="text-sm text-muted-foreground">
                                   {item.quantity > 1 && `${item.quantity} × `}
                                   {new Intl.NumberFormat("id-ID", {
                                     style: "currency",
@@ -347,14 +347,14 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
                   )}
 
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
                       Jumlah (Rp)
                     </label>
                     <input
                       type="number"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                      className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                       placeholder="0"
                       min="0"
                     />
@@ -362,24 +362,24 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
                         Tanggal
                       </label>
                       <input
                         type="date"
                         value={expenseDate}
                         onChange={(e) => setExpenseDate(e.target.value)}
-                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                        className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
                         Kategori
                       </label>
                       <select
                         value={categoryId}
                         onChange={(e) => setCategoryId(e.target.value)}
-                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                        className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                       >
                         <option value="">Pilih kategori</option>
                         {categories.map((cat) => (
@@ -392,23 +392,22 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
                       Catatan
                     </label>
                     <input
                       type="text"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                      className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                       placeholder="Opsional"
                     />
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <Button onClick={handleSave} disabled={saving}>
-                    {saving && <Loader2 className="size-4 animate-spin" />}
-                    Simpan Pengeluaran
+                  <Button onClick={handleSave} disabled={saving} className="w-full">
+                    {saving ? "Menyimpan..." : "Simpan Pengeluaran"}
                   </Button>
                   <Button variant="outline" onClick={reset}>
                     Batal

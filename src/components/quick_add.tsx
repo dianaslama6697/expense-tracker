@@ -121,10 +121,10 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
   if (done) {
     return (
       <FadeIn>
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950/30">
+        <div className="rounded-3xl border border-primary bg-primary/10 p-5">
           <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
             <Check className="size-5" />
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium text-foreground">
               Berhasil menambah Rp{Number(amount).toLocaleString("id-ID")}
               {merchant && ` — ${merchant}`}
             </span>
@@ -138,12 +138,12 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
   const canSave = amount && numAmount > 0
 
   return (
-    <div className="rounded-2xl border bg-white p-5 dark:bg-zinc-900">
+    <div className="rounded-3xl bg-card p-5 shadow-sm">
       <div className="space-y-3">
         {/* Baris: nominal + merchant */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-          <div className="flex flex-1 items-center gap-2 rounded-xl border px-3 py-2 dark:bg-zinc-800">
-            <span className="text-sm font-semibold text-zinc-400 dark:text-zinc-500">Rp</span>
+          <div className="flex flex-1 items-center gap-2 rounded-xl border border-input px-3 py-2 dark:bg-zinc-800">
+            <span className="text-sm font-semibold text-muted-foreground">Rp</span>
             <input
               ref={inputRef}
               type="text"
@@ -151,7 +151,7 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
               value={amount ? Number(amount).toLocaleString("id-ID") : ""}
               onChange={(e) => formatAmountInput(e.target.value)}
               placeholder="Nominal..."
-              className="flex-1 border-0 bg-transparent text-sm font-semibold outline-none placeholder:text-zinc-300 dark:text-zinc-100 dark:placeholder:text-zinc-600"
+              className="flex-1 border-0 bg-transparent text-sm font-semibold outline-none placeholder:text-muted-foreground text-foreground"
             />
             {amount && (
               <button
@@ -160,7 +160,7 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
                   setAmount("")
                   setError("")
                 }}
-                className="rounded p-0.5 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                className="rounded p-0.5 text-muted-foreground hover:text-foreground"
               >
                 <X className="size-3.5" />
               </button>
@@ -176,14 +176,14 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
           </div>
         </div>
 
-        {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+        {error && <p className="text-xs text-destructive">{error}</p>}
 
         {/* Kategori */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">Pilih kategori</p>
+            <p className="text-xs text-muted-foreground">Pilih kategori</p>
             {suggestedCategoryId && (
-              <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Sparkles className="size-3" />
                 otomatis dari merchant
               </span>
@@ -201,7 +201,7 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
                   className={`relative flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-all dark:bg-zinc-800 ${
                     isSuggested
                       ? "border-2 font-medium shadow-sm"
-                      : "hover:border-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/40"
+                      : "bg-secondary/50 hover:bg-secondary"
                   } ${saving && !isSavingTarget ? "pointer-events-none opacity-50" : ""}`}
                   style={{
                     borderColor: isSuggested ? (cat.color || "#6b7280") : undefined,
@@ -231,7 +231,7 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
 
         {/* Tombol simpan (shortcut: pencet kategori langsung simpen) */}
         <div className="flex items-center justify-between">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             Klik kategori untuk menyimpan
           </p>
           <div className="flex items-center gap-1.5">
@@ -240,7 +240,7 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
                 variant="ghost"
                 size="sm"
                 onClick={onScanClick}
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 rounded-full"
                 title="Scan struk"
               >
                 <Camera className="size-3.5" />

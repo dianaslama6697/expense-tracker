@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { Drawer } from "vaul"
 import { Button } from "@/components/ui/button"
-import { Plus, Pencil, Trash2, Copy, Check, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Copy, Check, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
 import { FadeIn, StaggerList, StaggerItem } from "@/components/motion_wrappers"
 import MerchantInput from "@/components/merchant_input"
@@ -64,6 +64,7 @@ export default function ExpenseList() {
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
   const [form, setForm] = useState<FormData>(emptyForm)
   const [error, setError] = useState("")
+  const amountRef = useRef<HTMLInputElement>(null)
 
   const fetchExpenses = useCallback(async () => {
     try {
@@ -95,6 +96,12 @@ export default function ExpenseList() {
     window.addEventListener("refresh-data", handler)
     return () => window.removeEventListener("refresh-data", handler)
   }, [fetchExpenses])
+
+  useEffect(() => {
+    if (showForm && amountRef.current) {
+      setTimeout(() => amountRef.current?.focus(), 150)
+    }
+  }, [showForm])
 
   function resetForm() {
     setForm(emptyForm)
@@ -135,7 +142,12 @@ export default function ExpenseList() {
     fetchSuggestion(merchant)
   }
 
-  async function handleSubmit() {
+  function handleAmountChange(value: string) {
+    setForm((prev) => ({ ...prev, amount: value.replace(/[^0-9]/g, "") }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
     setError("")
     if (!form.amount || !form.categoryId) {
       setError("Jumlah dan kategori wajib diisi")
@@ -244,7 +256,7 @@ export default function ExpenseList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -253,8 +265,8 @@ export default function ExpenseList() {
     <div className="space-y-6">
       {/* Ringkasan */}
       <FadeIn>
-        <div className="rounded-2xl border bg-white p-5 dark:bg-zinc-900">
-          <p className="text-sm text-sky-600">Pengeluaran Bulan Ini</p>
+        <div className="rounded-3xl bg-card p-5 shadow-sm">
+          <p className="text-sm text-muted-foreground">Pengeluaran Bulan Ini</p>
           <p className="text-2xl font-bold">{formatCurrency(currentMonthTotal)}</p>
         </div>
       </FadeIn>
@@ -267,105 +279,142 @@ export default function ExpenseList() {
         </Button>
       </FadeIn>
 
-      {/* Drawer form (mobile-friendly bottom sheet) */}
-      <Drawer.Root open={showForm} onOpenChange={(open) => { if (!open) resetForm() }}>
+      {/* Drawer form */}
+      <Drawer.Root
+        open={showForm}
+        onOpenChange={(open) => { if (!open) resetForm() }}
+      >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-4xl rounded-t-[16px] bg-white px-4 pb-8 pt-3 focus:outline-none dark:bg-zinc-900">
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-            <h3 className="mb-3 font-medium">
-              {editingId ? "Edit Pengeluaran" : "Tambah Pengeluaran"}
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Jumlah (Rp)
-                </label>
-                <input
-                  type="number"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Merchant
-                </label>
-                <MerchantInput
-                  value={form.merchant}
-                  onChange={(m) => setForm({ ...form, merchant: m })}
-                  onSuggestionSelect={handleMerchantSelect}
-                  placeholder="Cari atau ketik merchant..."
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Kategori
-                </label>
-                <select
-                  value={form.categoryId}
-                  onChange={(e) =>
-                    setForm({ ...form, categoryId: e.target.value })
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-                >
-                  <option value="">Pilih kategori</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-                {form.merchant && form.categoryId && (
-                  <p className="mt-1 text-xs text-amber-600">
-                    Kategori otomatis disarankan dari merchant
-                  </p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-4xl flex-col rounded-t-3xl bg-card pb-8 pt-3 focus:outline-none">
+            <div className="mx-auto mb-4 h-1.5 w-12 shrink-0 rounded-full bg-muted" />
+            <div className="overflow-y-auto px-4 flex-1 min-h-0">
+              <h3 className="mb-3 font-medium">
+                {editingId ? "Edit Pengeluaran" : "Tambah Pengeluaran"}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-3" onPointerDown={(e) => e.stopPropagation()}>
+                {/* Jumlah */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <label className="mb-1 block text-sm font-medium text-foreground">
+                    Jumlah (Rp)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+                      Rp
+                    </span>
+                    <input
+                      ref={amountRef}
+                      type="text"
+                      inputMode="numeric"
+                      value={form.amount ? Number(form.amount).toLocaleString("id-ID") : ""}
+                      onChange={(e) => handleAmountChange(e.target.value)}
+                      className="w-full rounded-xl border border-input py-2 pl-9 pr-8 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                      placeholder="0"
+                    />
+                    {form.amount && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, amount: "" })}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Merchant */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">
+                    Merchant
+                  </label>
+                  <MerchantInput
+                    value={form.merchant}
+                    onChange={(m) => setForm({ ...form, merchant: m })}
+                    onSuggestionSelect={handleMerchantSelect}
+                    placeholder="Cari atau ketik merchant..."
+                  />
+                </div>
+
+                {/* Kategori — grid button */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    Kategori
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                    {categories.map((cat) => {
+                      const selected = form.categoryId === cat.id
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setForm({ ...form, categoryId: cat.id })}
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-all dark:bg-zinc-800 ${
+                            selected
+                              ? "border-2 font-medium shadow-sm"
+                              : "bg-secondary/50 hover:bg-secondary"
+                          }`}
+                          style={{
+                            borderColor: selected ? (cat.color || "#6b7280") : undefined,
+                            backgroundColor: selected ? `${cat.color || "#6b7280"}10` : undefined,
+                          }}
+                        >
+                          <div
+                            className="size-3 shrink-0 rounded-full"
+                            style={{ backgroundColor: cat.color || "#6b7280" }}
+                          />
+                          <span className="truncate text-xs">{cat.name}</span>
+                          {selected && <Check className="ml-auto size-3 shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {form.merchant && form.categoryId && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Kategori otomatis disarankan dari merchant
+                    </p>
+                  )}
+                </div>
+
+                {/* Tanggal */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">
                     Tanggal
                   </label>
                   <input
                     type="date"
                     value={form.expenseDate}
-                    onChange={(e) =>
-                      setForm({ ...form, expenseDate: e.target.value })
-                    }
-                    className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                    onChange={(e) => setForm({ ...form, expenseDate: e.target.value })}
+                    className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Deskripsi
-                </label>
-                <input
-                  type="text"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-                  placeholder="Opsional"
-                />
-              </div>
 
-              {error && <p className="text-sm text-red-500">{error}</p>}
+                {/* Deskripsi — textarea */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">
+                    Deskripsi
+                  </label>
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    className="w-full resize-none rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                    placeholder="Opsional"
+                    rows={2}
+                  />
+                </div>
 
-              <div className="flex gap-2">
-                <Button onClick={handleSubmit} disabled={saving}>
-                  {saving && <Loader2 className="size-4 animate-spin" />}
-                  {editingId ? "Simpan" : "Tambah"}
-                </Button>
-                <Button variant="outline" onClick={resetForm}>
-                  Batal
-                </Button>
-              </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+
+                <div className="flex gap-2 pt-1">
+                  <Button type="submit" disabled={saving}>
+                    {saving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+                    {editingId ? "Simpan" : "Tambah"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Batal
+                  </Button>
+                </div>
+              </form>
             </div>
           </Drawer.Content>
         </Drawer.Portal>
@@ -373,7 +422,7 @@ export default function ExpenseList() {
 
       {/* Daftar pengeluaran */}
       {sortedMonths.length === 0 ? (
-        <p className="py-10 text-center text-sm text-zinc-400 dark:text-zinc-500">
+        <p className="py-10 text-center text-sm text-muted-foreground">
           Belum ada pengeluaran
         </p>
       ) : (
@@ -386,17 +435,17 @@ export default function ExpenseList() {
           return (
           <div key={key}>
             <div className="mb-2 flex items-baseline justify-between">
-              <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              <h3 className="text-sm font-semibold text-foreground">
                 {grouped[key].label}
               </h3>
-              <p className="text-xs font-medium text-zinc-500">
+              <p className="text-xs font-medium text-muted-foreground">
                 {formatCurrency(grouped[key].total)}
               </p>
             </div>
             <StaggerList className="space-y-2">
               {visible.map((expense) => (
                 <StaggerItem key={expense.id}>
-                  <div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2.5 dark:bg-zinc-900 sm:gap-3 sm:px-4 sm:py-3"
+                  <div className="flex items-center gap-2 rounded-xl bg-card px-3 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:gap-3 sm:px-4 sm:py-3"
                 >
                   <div
                     className="flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white sm:size-9 sm:text-xs"
@@ -410,7 +459,7 @@ export default function ExpenseList() {
                     <p className="truncate text-sm font-medium">
                       {expense.merchant || expense.description || expense.category.name}
                     </p>
-                    <p className="truncate text-xs text-zinc-400 dark:text-zinc-500">
+                    <p className="truncate text-xs text-muted-foreground">
                       {expense.category.name}
                       {expense.description && expense.merchant
                         ? ` - ${expense.description}`
@@ -421,7 +470,7 @@ export default function ExpenseList() {
                     <p className="text-xs font-semibold sm:text-sm">
                       {formatCurrency(Number(expense.amount))}
                     </p>
-                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500 sm:text-xs">
+                    <p className="text-[11px] text-muted-foreground sm:text-xs">
                       {format(new Date(expense.expenseDate), "d MMM", {
                         locale: id,
                       })}
@@ -430,24 +479,24 @@ export default function ExpenseList() {
                   <div className="flex gap-0.5 sm:gap-1">
                     <button
                       onClick={() => handleCopy(expense)}
-                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-sky-100 hover:text-blue-600 dark:text-zinc-500 dark:hover:bg-sky-950/40 dark:hover:text-blue-400 sm:p-1.5"
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:p-1.5"
                       title="Duplikat dengan tanggal hari ini"
                     >
                       {copiedId === expense.id ? (
-                        <Check className="size-3.5 text-emerald-500 sm:size-4" />
+                        <Check className="size-3.5 text-primary sm:size-4" />
                       ) : (
                         <Copy className="size-3.5 sm:size-4" />
                       )}
                     </button>
                     <button
                       onClick={() => openEdit(expense)}
-                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-sky-100 hover:text-blue-600 dark:text-zinc-500 dark:hover:bg-sky-950/40 dark:hover:text-blue-400 sm:p-1.5"
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:p-1.5"
                     >
                       <Pencil className="size-3.5 sm:size-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(expense.id)}
-                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-zinc-500 dark:hover:bg-red-950/40 dark:hover:text-red-400 sm:p-1.5"
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive sm:p-1.5"
                     >
                       <Trash2 className="size-3.5 sm:size-4" />
                     </button>
@@ -459,7 +508,7 @@ export default function ExpenseList() {
             {hidden > 0 && (
               <button
                 onClick={() => setVisibleCounts((prev) => ({ ...prev, [key]: (prev[key] || 10) + 10 }))}
-                className="mt-1 w-full rounded-xl border border-dashed py-2 text-xs font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-300"
+                className="mt-1 w-full rounded-xl border border-dashed py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
               >
                 Tampilkan 10 lainnya ({hidden} tersisa)
               </button>

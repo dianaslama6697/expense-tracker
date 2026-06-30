@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Drawer } from "vaul"
 import { Plus, Wallet, Pencil, Trash2, Loader2 } from "lucide-react"
+import { FadeIn, StaggerList, StaggerItem } from "@/components/motion_wrappers"
 
 type Category = {
   id: string
@@ -128,7 +129,7 @@ export default function PocketsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-zinc-400 dark:text-zinc-500" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -147,21 +148,21 @@ export default function PocketsPage() {
       </div>
 
       {pockets.length === 0 ? (
-        <div className="rounded-2xl border bg-white p-8 text-center dark:bg-zinc-900">
+        <div className="rounded-3xl bg-card p-8 text-center shadow-sm">
           <Wallet className="mx-auto mb-3 size-8 text-zinc-300 dark:text-zinc-600" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             Belum ada kantong. Buat kantong pertama kamu!
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <StaggerList className="space-y-3">
           {pockets.map((p) => {
             const isOver = p.percentage > 100
             const isWarning = p.percentage >= 80 && p.percentage <= 100
             return (
+              <StaggerItem key={p.id}>
               <div
-                key={p.id}
-                className="rounded-2xl border bg-white p-4 dark:bg-zinc-900"
+                className="rounded-3xl bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -171,13 +172,13 @@ export default function PocketsPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => openEdit(p)}
-                      className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       <Pencil className="size-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(p.id)}
-                      className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-800"
+                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -185,10 +186,10 @@ export default function PocketsPage() {
                 </div>
 
                 <div className="mb-2 flex items-baseline justify-between">
-                  <span className={`text-2xl font-bold ${isOver ? "text-red-600 dark:text-red-400" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  <span className={`text-2xl font-bold ${isOver ? "text-destructive" : isWarning ? "text-orange-600 dark:text-orange-400" : "text-foreground"}`}>
                     {formatCurrency(p.remaining)}
                   </span>
-                  <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <span className="text-xs text-muted-foreground">
                     dari {formatCurrency(p.budgetAmount)}
                   </span>
                 </div>
@@ -196,7 +197,7 @@ export default function PocketsPage() {
                 <div className="mb-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      isOver ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
+                      isOver ? "bg-destructive" : isWarning ? "bg-orange-500" : "bg-primary"
                     }`}
                     style={{ width: `${Math.min(p.percentage, 100)}%` }}
                   />
@@ -207,7 +208,7 @@ export default function PocketsPage() {
                     {p.categories.map((c) => (
                       <span
                         key={c.id}
-                        className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 dark:text-zinc-400"
+                        className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
                         style={{ backgroundColor: c.color ? `${c.color}20` : undefined }}
                       >
                         {c.name}
@@ -216,35 +217,36 @@ export default function PocketsPage() {
                   </div>
                 )}
               </div>
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerList>
       )}
 
       <Drawer.Root open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto rounded-t-2xl bg-white px-4 pb-8 pt-4 outline-none dark:bg-zinc-900">
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto rounded-t-3xl bg-card px-4 pb-8 pt-4 outline-none">
             <Drawer.Handle />
             <div className="mx-auto max-w-sm">
-              <h3 className="mb-4 text-center text-sm font-medium dark:text-zinc-100">
+              <h3 className="mb-4 text-center text-sm font-medium text-foreground">
                 {editing ? "Edit Kantong" : "Kantong Baru"}
               </h3>
 
               <div className="space-y-3">
                 <div>
-                  <label className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Nama</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">Nama</label>
                   <input
                     type="text"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                    className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                     placeholder="Nama kantong"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Emoji</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">Emoji</label>
                   <div className="flex flex-wrap gap-1">
                     {EMOJIS.map((e) => (
                       <button
@@ -262,19 +264,19 @@ export default function PocketsPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Budget Bulanan</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">Budget Bulanan</label>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={formAmount}
                     onChange={(e) => setFormAmount(e.target.value.replace(/[^0-9]/g, ""))}
-                    className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                    className="w-full rounded-xl border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                     placeholder="Contoh: 1500000"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">Kategori</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">Kategori</label>
                   <div className="flex flex-wrap gap-1.5">
                     {categories.map((c) => {
                       const selected = formCategoryIds.includes(c.id)
@@ -286,7 +288,7 @@ export default function PocketsPage() {
                           className={`rounded-full px-3 py-1 text-xs transition-colors ${
                             selected
                               ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                              : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                              : "bg-secondary text-secondary-foreground hover:brightness-95"
                           }`}
                         >
                           {c.name}
@@ -300,7 +302,7 @@ export default function PocketsPage() {
                   type="button"
                   disabled={saving || !formName || !formAmount}
                   onClick={handleSave}
-                  className="w-full rounded-xl bg-gray-900 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-zinc-200"
+                  className="w-full rounded-3xl bg-primary py-3 text-sm font-medium text-primary-foreground transition-colors hover:brightness-105 disabled:opacity-50"
                 >
                   {saving ? "Menyimpan..." : editing ? "Simpan" : "Buat Kantong"}
                 </button>
