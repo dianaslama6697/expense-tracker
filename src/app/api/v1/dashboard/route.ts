@@ -280,7 +280,7 @@ export async function GET(req: NextRequest) {
       dailyTotals,
       budgets: pocketsData,
       insights,
-      recentExpenses: currentExpenses.slice(0, 5),
+      recentExpenses: currentExpenses,
     })
   } catch (error) {
     console.error("Error fetching dashboard:", error)

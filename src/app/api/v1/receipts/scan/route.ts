@@ -6,7 +6,7 @@ import { getUserId } from "@/lib/auth"
 
 const API_KEY = process.env.OPENAI_API_KEY
 const BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o"
+const MODEL = process.env.OPENAI_MODEL || "gpt-5.3"
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME
 const CLOUD_KEY = process.env.CLOUDINARY_API_KEY
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     // Upload ke Cloudinary untuk penyimpanan
     const cloudinaryUrl = await uploadToCloudinary(compressed)
 
-    // Kirim ke adaCODE pakai gpt-4o (vision-capable)
+    // Kirim ke adaCODE pakai vision-capable model
     console.log("[SCAN] Calling vision API with model:", MODEL)
     const visionRes = await fetch(`${BASE_URL}/chat/completions`, {
       method: "POST",

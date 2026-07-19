@@ -64,11 +64,21 @@ export default function ExpenseList() {
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
   const [form, setForm] = useState<FormData>(emptyForm)
   const [error, setError] = useState("")
+  const [periodLabel, setPeriodLabel] = useState("")
   const amountRef = useRef<HTMLInputElement>(null)
 
   const fetchExpenses = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/expenses")
+      const now = new Date()
+      const d = now.getDate()
+      const base = new Date(now.getFullYear(), now.getMonth(), 25)
+      if (d < 25) base.setMonth(base.getMonth() - 1)
+      const s = new Date(base.getFullYear(), base.getMonth(), 25)
+      const e = new Date(base.getFullYear(), base.getMonth() + 1, 24)
+      const start = s.toISOString().split("T")[0]
+      const end = e.toISOString().split("T")[0]
+      setPeriodLabel(`${format(s, "d MMM", { locale: id })} - ${format(e, "d MMM yyyy", { locale: id })}`)
+      const res = await fetch(`/api/v1/expenses?start=${start}&end=${end}`)
       if (res.ok) setExpenses(await res.json())
     } catch {
       console.error("Failed to fetch expenses")
@@ -231,13 +241,9 @@ export default function ExpenseList() {
     }
   }
 
-  const now = new Date()
-  const currentMonthTotal = expenses
-    .filter((e) => {
-      const d = new Date(e.expenseDate)
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    })
-    .reduce((sum, e) => sum + Number(e.amount), 0)
+  const currentMonthTotal = expenses.reduce(
+    (sum, e) => sum + Number(e.amount), 0
+  )
 
   // Group by month
   const grouped = expenses.reduce(
@@ -266,7 +272,7 @@ export default function ExpenseList() {
       {/* Ringkasan */}
       <FadeIn>
         <div className="rounded-3xl bg-card p-5 shadow-sm">
-          <p className="text-sm text-muted-foreground">Pengeluaran Bulan Ini</p>
+          <p className="text-sm text-muted-foreground">Periode {periodLabel}</p>
           <p className="text-2xl font-bold">{formatCurrency(currentMonthTotal)}</p>
         </div>
       </FadeIn>

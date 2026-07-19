@@ -38,7 +38,7 @@ type ScanReceiptProps = {
 const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
   function ScanReceipt({ onSuccess, onScanned, showFab = true }, ref) {
   const pathname = usePathname()
-  const hideFab = !showFab || pathname.startsWith("/split-bill") || pathname.startsWith("/pockets") || pathname.startsWith("/split/")
+  const hideFab = !showFab || pathname.startsWith("/split-bill") || pathname.startsWith("/pockets") || pathname.startsWith("/split/") || pathname === "/login"
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [step, setStep] = useState<
     "idle" | "uploading" | "processing" | "done"
@@ -200,8 +200,8 @@ const ScanReceipt = forwardRef<ScanReceiptHandle, ScanReceiptProps>(
 
       {/* Picker popup */}
       {showPicker && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setShowPicker(false)}>
-          <div className="w-full max-w-sm rounded-t-2xl bg-card p-4 sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setShowPicker(false)}>
+          <div className="w-full max-w-sm rounded-t-2xl bg-card p-4 mb-20 sm:rounded-3xl sm:mb-0" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 text-center text-sm font-medium">
               Ambil dari mana?
             </p>

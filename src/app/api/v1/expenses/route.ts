@@ -10,10 +10,17 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const month = searchParams.get("month")
     const year = searchParams.get("year")
+    const start = searchParams.get("start")
+    const end = searchParams.get("end")
 
     const where: Record<string, unknown> = { userId }
 
-    if (month && year) {
+    if (start && end) {
+      where.expenseDate = {
+        gte: new Date(start + "T00:00:00"),
+        lte: new Date(end + "T23:59:59.999"),
+      }
+    } else if (month && year) {
       const startDate = new Date(Number(year), Number(month) - 1, 1)
       const endDate = new Date(Number(year), Number(month), 0, 23, 59, 59, 999)
       where.expenseDate = { gte: startDate, lte: endDate }

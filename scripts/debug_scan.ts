@@ -3,7 +3,7 @@ import path from "path"
 
 const API_KEY = process.env.OPENAI_API_KEY || ""
 const BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o"
+const MODEL = process.env.OPENAI_MODEL || "gpt-5.3"
 
 // Replikasi persis logic di scan/route.ts
 async function scanEndpointSimulation(filePath: string) {

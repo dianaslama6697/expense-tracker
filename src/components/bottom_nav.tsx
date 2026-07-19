@@ -6,7 +6,7 @@ import { LayoutDashboard, History, Wallet, Handshake } from "lucide-react"
 
 const tabs = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/expenses", label: "Riwayat", icon: History },
+  { href: "/expenses", label: "Expense", icon: History },
   { href: "/split-bills", label: "Split", icon: Handshake },
   { href: "/pockets", label: "Kantong", icon: Wallet },
 ]
@@ -14,7 +14,7 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname()
 
-  if (pathname === "/login") return null
+  if (pathname === "/login" || pathname.startsWith("/split/")) return null
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/90 backdrop-blur-lg pb-safe">

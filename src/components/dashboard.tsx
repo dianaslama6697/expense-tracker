@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   Bell,
   Pencil,
+  X,
 } from "lucide-react"
 import {
   PieChart,
@@ -136,6 +137,7 @@ export default function Dashboard() {
   const [editingPocket, setEditingPocket] = useState<PocketItem | null>(null)
   const [pocketAmount, setPocketAmount] = useState("")
   const [savingPocket, setSavingPocket] = useState(false)
+  const [visibleRecentCount, setVisibleRecentCount] = useState(10)
 
   const buildParams = useCallback(() => {
     const now = new Date()
@@ -498,6 +500,17 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-center justify-center sm:block">
+                  {categoryId && (
+                    <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="text-foreground">Filter:</span>
+                      <span className="font-medium text-foreground">
+                        {categories.find((c) => c.id === categoryId)?.name}
+                      </span>
+                      <button onClick={() => setCategoryId("")} className="ml-0.5 rounded p-0.5 text-muted-foreground hover:text-foreground">
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  )}
                   <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
                       <defs>
@@ -525,11 +538,15 @@ export default function Dashboard() {
                         animationDuration={800}
                         strokeWidth={2}
                         stroke="hsl(var(--card))"
+                        style={{ cursor: "pointer" }}
                       >
                         {byCategory.map((cat) => (
                           <Cell
                             key={cat.categoryId}
                             fill={`url(#pieGrad-${cat.categoryId})`}
+                            onClick={() => setCategoryId(cat.categoryId === categoryId ? "" : cat.categoryId)}
+                            opacity={categoryId && categoryId !== cat.categoryId ? 0.3 : 1}
+                            style={{ cursor: "pointer" }}
                           />
                         ))}
                       </Pie>
@@ -550,8 +567,8 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   {byCategory.map((cat) => (
-                    <div key={cat.categoryId}>
-                      <div className="mb-0.5 flex items-center justify-between text-xs">
+                    <button key={cat.categoryId} onClick={() => setCategoryId(cat.categoryId === categoryId ? "" : cat.categoryId)} className="w-full text-left">
+                      <div className={`mb-0.5 flex items-center justify-between text-xs ${categoryId && categoryId !== cat.categoryId ? "opacity-40" : ""}`}>
                         <div className="flex items-center gap-1.5">
                           <div
                             className="size-2.5 rounded-full"
@@ -574,13 +591,67 @@ export default function Dashboard() {
                           }}
                         />
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
             )}
           </div>
           </FadeIn>
+
+          {/* Pengeluaran terbaru */}
+          <div className="rounded-3xl bg-card p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-medium">Semua Pengeluaran</h3>
+            {data.recentExpenses.length === 0 ? (
+              <p className="py-3 text-center text-sm text-muted-foreground">
+                Belum ada pengeluaran
+              </p>
+            ) : (
+              <>
+                <StaggerList className="space-y-2">
+                  {data.recentExpenses.slice(0, visibleRecentCount).map((exp) => (
+                    <StaggerItem key={exp.id}>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                          style={{
+                            backgroundColor: exp.category.color || "#6b7280",
+                          }}
+                        >
+                          {exp.category.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm">
+                            {exp.merchant || exp.description || exp.category.name}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">
+                            {formatCurrency(Number(exp.amount))}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(
+                              new Date(exp.expenseDate),
+                              "d MMM",
+                              { locale: localeId }
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </StaggerItem>
+                  ))}
+                </StaggerList>
+                {data.recentExpenses.length > visibleRecentCount && (
+                  <button
+                    onClick={() => setVisibleRecentCount((p) => p + 10)}
+                    className="mt-2 w-full rounded-xl border border-dashed py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                  >
+                    Tampilkan 10 lainnya ({data.recentExpenses.length - visibleRecentCount} tersisa)
+                  </button>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Grafik tren harian */}
           <FadeIn delay={0.2}>
@@ -778,51 +849,6 @@ export default function Dashboard() {
               </Drawer.Content>
             </Drawer.Portal>
           </Drawer.Root>
-
-          {/* Pengeluaran terbaru */}
-          <div className="rounded-3xl bg-card p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-medium">Pengeluaran Terbaru</h3>
-            {data.recentExpenses.length === 0 ? (
-              <p className="py-3 text-center text-sm text-muted-foreground">
-                Belum ada pengeluaran
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {data.recentExpenses.map((exp) => (
-                  <div
-                    key={exp.id}
-                    className="flex items-center gap-3"
-                  >
-                    <div
-                      className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                      style={{
-                        backgroundColor: exp.category.color || "#6b7280",
-                      }}
-                    >
-                      {exp.category.name.charAt(0)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm">
-                        {exp.merchant || exp.description || exp.category.name}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {formatCurrency(Number(exp.amount))}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(
-                          new Date(exp.expenseDate),
-                          "d MMM",
-                          { locale: localeId }
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </>
       )}
     </div>
