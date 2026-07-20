@@ -622,8 +622,11 @@ export default function Dashboard() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm">
-                            {exp.merchant || exp.description || exp.category.name}
+                            {exp.merchant || exp.category.name}
                           </p>
+                          {exp.description && (
+                            <p className="text-xs text-muted-foreground truncate">{exp.description}</p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">
