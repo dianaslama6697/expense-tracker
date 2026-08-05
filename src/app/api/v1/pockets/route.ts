@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 export async function GET() {
   try {
@@ -57,7 +58,7 @@ export async function GET() {
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error("Error fetching pockets:", error)
+    await reportError(error, { route: "/api/v1/pockets", method: "GET" })
     return NextResponse.json(
       { error: "Gagal mengambil pocket" },
       { status: 500 }
@@ -117,7 +118,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error("Error creating pocket:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "POST" })
     return NextResponse.json(
       { error: "Gagal membuat pocket" },
       { status: 500 }

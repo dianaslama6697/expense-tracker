@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(expenses)
   } catch (error) {
-    console.error("Error fetching expenses:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "GET", userId: await getUserId() ?? undefined })
     return NextResponse.json(
       { error: "Gagal mengambil pengeluaran" },
       { status: 500 }
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(expense, { status: 201 })
   } catch (error) {
-    console.error("Error creating expense:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "POST", userId: await getUserId() ?? undefined })
     return NextResponse.json(
       { error: "Gagal menambah pengeluaran" },
       { status: 500 }

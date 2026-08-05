@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(category)
   } catch (error) {
-    console.error("Error suggesting category:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "GET" })
     return NextResponse.json(
       { error: "Gagal menyarankan kategori" },
       { status: 500 }

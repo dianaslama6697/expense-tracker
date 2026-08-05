@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { reportError } from "@/lib/error-handler"
 
 export async function POST(req: NextRequest) {
   try {
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error("Register error:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "POST" })
     return NextResponse.json(
       { error: "Gagal mendaftar" },
       { status: 500 }

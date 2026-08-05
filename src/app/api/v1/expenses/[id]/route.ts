@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 export async function PUT(
   req: NextRequest,
@@ -51,7 +52,7 @@ export async function PUT(
 
     return NextResponse.json(updated)
   } catch (error) {
-    console.error("Error updating expense:", error)
+    await reportError(error, { route: `/api/v1/expenses/${params.id}`, method: "PUT" })
     return NextResponse.json(
       { error: "Gagal mengubah pengeluaran" },
       { status: 500 }
@@ -80,7 +81,7 @@ export async function DELETE(
     await prisma.expense.delete({ where: { id: params.id } })
     return NextResponse.json({ message: "Berhasil dihapus" })
   } catch (error) {
-    console.error("Error deleting expense:", error)
+    await reportError(error, { route: `/api/v1/expenses/${params.id}`, method: "DELETE" })
     return NextResponse.json(
       { error: "Gagal menghapus pengeluaran" },
       { status: 500 }

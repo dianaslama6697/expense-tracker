@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 function toLocalDateStr(date: Date) {
   const y = date.getFullYear()
@@ -283,7 +284,7 @@ export async function GET(req: NextRequest) {
       recentExpenses: currentExpenses,
     })
   } catch (error) {
-    console.error("Error fetching dashboard:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "GET", userId: await getUserId() ?? undefined })
     return NextResponse.json(
       { error: "Gagal mengambil data dashboard" },
       { status: 500 }

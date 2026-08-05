@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 export async function GET() {
   try {
@@ -33,7 +34,7 @@ export async function GET() {
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error("Error fetching category usage:", error)
+    await reportError(error, { route: "/api/v1/categories/usage", method: "GET" })
     return NextResponse.json(
       { error: "Gagal mengambil data kategori" },
       { status: 500 }

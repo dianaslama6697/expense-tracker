@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 const API_KEY = process.env.OPENAI_API_KEY
 const BASE_URL =
@@ -137,7 +138,12 @@ export async function POST(req: NextRequest) {
       items,
     })
   } catch (error) {
-    console.error("Process error:", error)
+    await reportError(error, {
+      route: req.nextUrl.pathname,
+      method: "POST",
+      userId: await getUserId() ?? undefined,
+      extra: { receiptId: (await req.clone().json()).receiptId },
+    })
 
     try {
       const { receiptId } = await req.clone().json()

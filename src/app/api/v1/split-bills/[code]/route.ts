@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { reportError } from "@/lib/error-handler"
 
 export async function GET(
   _req: NextRequest,
@@ -26,7 +27,7 @@ export async function GET(
 
     return NextResponse.json(splitBill)
   } catch (error) {
-    console.error("Get split bill error:", error)
+    await reportError(error, { route: `/api/v1/split-bills/${params.code}`, method: "GET" })
     return NextResponse.json({ error: "Gagal mengambil data" }, { status: 500 })
   }
 }

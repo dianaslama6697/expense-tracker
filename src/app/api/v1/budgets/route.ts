@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     })
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
-    console.error("Budget error:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "POST" })
     return NextResponse.json(
       { error: "Gagal menyimpan budget" },
       { status: 500 }

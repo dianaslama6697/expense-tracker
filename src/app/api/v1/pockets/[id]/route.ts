@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 export async function PATCH(
   req: NextRequest,
@@ -45,7 +46,7 @@ export async function PATCH(
 
     return NextResponse.json({ id: updated.id, name: updated.name })
   } catch (error) {
-    console.error("Error updating pocket:", error)
+    await reportError(error, { route: `/api/v1/pockets/${params.id}`, method: "PATCH" })
     return NextResponse.json(
       { error: "Gagal mengupdate pocket" },
       { status: 500 }
@@ -72,7 +73,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Pocket dihapus" })
   } catch (error) {
-    console.error("Error deleting pocket:", error)
+    await reportError(error, { route: `/api/v1/pockets/${params.id}`, method: "DELETE" })
     return NextResponse.json(
       { error: "Gagal menghapus pocket" },
       { status: 500 }

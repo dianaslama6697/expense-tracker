@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, History, Wallet, Handshake } from "lucide-react"
+import { LayoutDashboard, History, Wallet, Handshake, Calendar } from "lucide-react"
 
 const tabs = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/expenses", label: "Expense", icon: History },
+  { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/split-bills", label: "Split", icon: Handshake },
   { href: "/pockets", label: "Kantong", icon: Wallet },
 ]

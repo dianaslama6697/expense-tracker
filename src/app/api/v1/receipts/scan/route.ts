@@ -3,6 +3,7 @@ import sharp from "sharp"
 import crypto from "node:crypto"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 const API_KEY = process.env.OPENAI_API_KEY
 const BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"
@@ -40,6 +41,7 @@ async function uploadToCloudinary(buffer: Buffer): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  const start = Date.now()
   try {
     const userId = await getUserId()
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -113,11 +115,9 @@ export async function POST(req: NextRequest) {
 
     if (!visionRes.ok) {
       const errText = await visionRes.text()
-      console.error("[SCAN] API error:", visionRes.status, errText.slice(0, 500))
-      return NextResponse.json(
-        { error: "API vision error" },
-        { status: 502 }
-      )
+      // Prefix "VISION" agar automatic severity=high
+      const visionErr = new Error(`VISION_${visionRes.status}: ${errText.slice(0, 200)}`)
+      throw visionErr
     }
 
     const visionData = await visionRes.json()
@@ -132,7 +132,9 @@ export async function POST(req: NextRequest) {
     if (jsonMatch) {
       try {
         parsed = JSON.parse(jsonMatch[0])
-      } catch {}
+      } catch (err) {
+        throw new Error(`VISION_PARSE_FAIL: ${(err as Error).message}`)
+      }
     }
 
     const merchant = String(parsed.merchant || "")
@@ -185,7 +187,17 @@ export async function POST(req: NextRequest) {
       description: finalDescription,
     })
   } catch (error) {
-    console.error("Scan error:", error)
+    const duration = Date.now() - start
+    await reportError(error, {
+      route: req.nextUrl.pathname,
+      method: "POST",
+      userId: await getUserId() ?? undefined,
+      duration,
+      extra: {
+        fileSize: req.headers.get("content-length") ?? "unknown",
+        model: MODEL,
+      },
+    })
     return NextResponse.json(
       { error: "Gagal scan struk" },
       { status: 500 }

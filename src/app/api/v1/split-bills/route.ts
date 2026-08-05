@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 import crypto from "node:crypto"
 
 function generateShareCode(): string {
@@ -22,7 +23,7 @@ export async function GET() {
 
     return NextResponse.json(splitBills)
   } catch (error) {
-    console.error("Fetch split bills error:", error)
+    await reportError(error, { route: "/api/v1/split-bills", method: "GET", userId: await getUserId() ?? undefined })
     return NextResponse.json({ error: "Gagal mengambil data" }, { status: 500 })
   }
 }
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    console.error("Create split bill error:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "POST", userId: await getUserId() ?? undefined })
     return NextResponse.json({ error: "Gagal membuat split bill" }, { status: 500 })
   }
 }

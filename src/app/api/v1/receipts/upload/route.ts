@@ -2,6 +2,7 @@ import { v2 as cloudinary } from "cloudinary"
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUserId } from "@/lib/auth"
+import { reportError } from "@/lib/error-handler"
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
       publicId: result.public_id,
     })
   } catch (error) {
-    console.error("Upload error:", error)
+    await reportError(error, { route: req.nextUrl.pathname, method: "POST" })
     return NextResponse.json(
       { error: "Gagal upload gambar" },
       { status: 500 }

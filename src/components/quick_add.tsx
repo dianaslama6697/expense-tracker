@@ -18,9 +18,10 @@ type CategoryWithUsage = {
 type QuickAddProps = {
   onSuccess?: () => void
   onScanClick?: () => void
+  selectedDate?: string
 }
 
-export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
+export default function QuickAdd({ onSuccess, onScanClick, selectedDate }: QuickAddProps) {
   const [amount, setAmount] = useState("")
   const [merchant, setMerchant] = useState("")
   const [categories, setCategories] = useState<CategoryWithUsage[]>([])
@@ -89,7 +90,7 @@ export default function QuickAdd({ onSuccess, onScanClick }: QuickAddProps) {
           amount,
           categoryId,
           merchant: merchant || undefined,
-          expenseDate: new Date().toISOString().split("T")[0],
+          expenseDate: selectedDate || new Date().toISOString().split("T")[0],
         }),
       })
 
